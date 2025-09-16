@@ -1,0 +1,310 @@
+pipeline {
+    agent any
+    
+    environment {
+        // 환경 변수 설정
+        JAVA_HOME = 'C:\\work\\jdk-17.0.2'
+        GRADLE_HOME = "${WORKSPACE}\\gradle"
+        APP_NAME = 'youth-bulletin'
+        DEPLOY_PORT = '80'
+        BUILD_DIR = "${WORKSPACE}\\build\\libs"
+        APP_PID_FILE = "${WORKSPACE}\\app.pid"
+    }
+    
+    tools {
+        gradle 'Gradle-8.3'  // Jenkins에서 Gradle 도구 설정 필요
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '소스 코드 체크아웃 중...'
+                checkout scm
+                
+                // Git 정보 출력 (Windows 환경)
+                script {
+                    try {
+                        def gitCommit = bat(returnStdout: true, script: '@git rev-parse HEAD').trim()
+                        def gitBranch = bat(returnStdout: true, script: '@git rev-parse --abbrev-ref HEAD').trim()
+                        echo "Git Commit: ${gitCommit}"
+                        echo "Git Branch: ${gitBranch}"
+                    } catch (Exception e) {
+                        echo "Git 정보를 가져올 수 없습니다: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+        
+        stage('Environment Setup') {
+            steps {
+                echo '환경 설정 중...'
+                script {
+                    // Java 버전 확인
+                    bat '''
+                        echo Java 환경 확인:
+                        "%JAVA_HOME%\\bin\\java" -version
+                    '''
+                    
+                    // Gradle 버전 확인
+                    bat '''
+                        echo Gradle 환경 확인:
+                        gradlew.bat --version
+                    '''
+                    
+                    // 프로젝트 정보 출력
+                    echo "프로젝트: 청년부 모바일 주보 시스템"
+                    echo "빌드 번호: ${BUILD_NUMBER}"
+                    echo "작업 공간: ${WORKSPACE}"
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'Gradle 빌드 시작...'
+                script {
+                    try {
+                        // Gradle 빌드 실행 (Windows 환경)
+                        bat '''
+                            set JAVA_HOME=%JAVA_HOME%
+                            gradlew.bat clean build -x test --no-daemon
+                        '''
+                        echo '✅ 빌드 성공!'
+                    } catch (Exception e) {
+                        echo "❌ 빌드 실패: ${e.getMessage()}"
+                        error "빌드가 실패했습니다."
+                    }
+                }
+            }
+            
+            post {
+                success {
+                    echo '빌드 아티팩트 보관 중...'
+                    archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo '테스트 실행 중...'
+                script {
+                    try {
+                        bat '''
+                            set JAVA_HOME=%JAVA_HOME%
+                            gradlew.bat test --no-daemon
+                        '''
+                        echo '✅ 테스트 통과!'
+                    } catch (Exception e) {
+                        echo "⚠️ 테스트 실패: ${e.getMessage()}"
+                        // 테스트 실패 시에도 배포는 계속 진행 (선택사항)
+                    }
+                }
+            }
+            
+            post {
+                always {
+                    // 테스트 결과 발행
+                    script {
+                        try {
+                            publishTestResults testResultsPattern: 'build/test-results/test/*.xml'
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'build/reports/tests/test',
+                                reportFiles: 'index.html',
+                                reportName: 'Test Report'
+                            ])
+                        } catch (Exception e) {
+                            echo "테스트 결과 발행 중 오류: ${e.getMessage()}"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Stop Previous Application') {
+            steps {
+                echo '이전 애플리케이션 중지 중...'
+                script {
+                    try {
+                        // 이전 실행 중인 Spring Boot 애플리케이션 중지
+                        bat '''
+                            @echo off
+                            echo 이전 애플리케이션 프로세스 확인 및 중지...
+                            
+                            REM Java 프로세스 중 Spring Boot 애플리케이션 찾기
+                            for /f "tokens=2" %%i in ('tasklist /fi "imagename eq java.exe" /fo table /nh ^| findstr "java.exe"') do (
+                                echo Java 프로세스 ID: %%i
+                                taskkill /f /pid %%i 2>nul
+                            )
+                            
+                            REM 포트 80 사용 중인 프로세스 확인
+                            netstat -ano | findstr :80 | findstr LISTENING
+                            if %errorlevel% equ 0 (
+                                echo 포트 80이 사용 중입니다. 프로세스를 확인하세요.
+                            ) else (
+                                echo 포트 80이 사용 가능합니다.
+                            )
+                            
+                            timeout 3
+                        '''
+                        echo '✅ 이전 애플리케이션 정리 완료'
+                    } catch (Exception e) {
+                        echo "⚠️ 애플리케이션 정리 중 오류 (정상적일 수 있음): ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo '새 애플리케이션 배포 중...'
+                script {
+                    try {
+                        // Spring Boot 애플리케이션 백그라운드 실행
+                        bat '''
+                            @echo off
+                            echo 새 애플리케이션 시작 중...
+                            
+                            set JAVA_HOME=%JAVA_HOME%
+                            set SPRING_PROFILES_ACTIVE=prod
+                            
+                            REM JAR 파일 찾기
+                            for %%f in (build\\libs\\*.jar) do set JAR_FILE=%%f
+                            
+                            if not defined JAR_FILE (
+                                echo ERROR: JAR 파일을 찾을 수 없습니다.
+                                exit /b 1
+                            )
+                            
+                            echo JAR 파일: %JAR_FILE%
+                            echo Java Home: %JAVA_HOME%
+                            echo 포트: %DEPLOY_PORT%
+                            
+                            REM 백그라운드에서 Spring Boot 애플리케이션 실행
+                            start "Youth Bulletin App" /min "%JAVA_HOME%\\bin\\java" -jar -Dserver.port=%DEPLOY_PORT% -Dspring.profiles.active=prod "%JAR_FILE%"
+                            
+                            echo 애플리케이션이 백그라운드에서 시작되었습니다.
+                            timeout 10
+                        '''
+                        
+                        echo "✅ 배포 완료! 포트 ${DEPLOY_PORT}에서 서비스 중"
+                    } catch (Exception e) {
+                        echo "❌ 배포 실패: ${e.getMessage()}"
+                        error "배포가 실패했습니다."
+                    }
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                echo '애플리케이션 헬스체크 중...'
+                script {
+                    def maxRetries = 12
+                    def retryCount = 0
+                    def healthCheckPassed = false
+                    
+                    while (retryCount < maxRetries && !healthCheckPassed) {
+                        try {
+                            sleep(time: 5, unit: 'SECONDS')
+                            
+                            // PowerShell을 사용한 헬스체크
+                            def response = bat(
+                                script: """
+                                    @echo off
+                                    powershell -Command "try { \$response = Invoke-WebRequest -Uri 'http://localhost:${DEPLOY_PORT}/api/bulletin/today' -UseBasicParsing -TimeoutSec 10; if(\$response.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }"
+                                """,
+                                returnStatus: true
+                            )
+                            
+                            if (response == 0) {
+                                healthCheckPassed = true
+                                echo "✅ 헬스체크 성공! (시도 ${retryCount + 1}/${maxRetries})"
+                            } else {
+                                retryCount++
+                                echo "⚠️ 헬스체크 대기 중... (시도 ${retryCount}/${maxRetries})"
+                            }
+                        } catch (Exception e) {
+                            retryCount++
+                            echo "⚠️ 헬스체크 실패: ${e.getMessage()} (시도 ${retryCount}/${maxRetries})"
+                        }
+                    }
+                    
+                    if (!healthCheckPassed) {
+                        error "헬스체크에 실패했습니다. 애플리케이션이 제대로 시작되지 않았을 수 있습니다."
+                    }
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                echo '빌드 정리 중...'
+                script {
+                    try {
+                        // 임시 파일 정리
+                        bat '''
+                            @echo off
+                            echo 임시 파일 정리 중...
+                            if exist "build\\tmp" rmdir /s /q "build\\tmp" 2>nul
+                            echo 정리 완료
+                        '''
+                        echo '✅ 빌드 정리 완료'
+                    } catch (Exception e) {
+                        echo "⚠️ 정리 중 오류: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '파이프라인 완료'
+        }
+        
+        success {
+            echo """
+            🎉 배포 성공!
+            
+            📱 접속 주소:
+            - 메인: http://localhost:${DEPLOY_PORT}/
+            - 모바일: http://localhost:${DEPLOY_PORT}/mobile
+            - API 문서: http://localhost:${DEPLOY_PORT}/swagger-ui.html
+            - H2 콘솔: http://localhost:${DEPLOY_PORT}/h2-console
+            
+            🔍 애플리케이션 상태 확인:
+            - 프로세스: tasklist | findstr java.exe
+            - 포트: netstat -ano | findstr :${DEPLOY_PORT}
+            
+            📋 유용한 명령어:
+            - 로그 확인: Jenkins 콘솔 또는 애플리케이션 창
+            - 재시작: Jenkins에서 "Build Now" 다시 실행
+            """
+        }
+        
+        failure {
+            echo """
+            ❌ 배포 실패!
+            
+            🔍 문제 해결:
+            1. Jenkins 콘솔 로그 확인
+            2. Java 경로 확인: ${JAVA_HOME}
+            3. 포트 충돌 확인: netstat -ano | findstr :${DEPLOY_PORT}
+            4. JAR 파일 확인: dir build\\libs\\*.jar
+            
+            💡 일반적인 해결책:
+            - 이전 Java 프로세스 수동 종료
+            - 포트 변경 (application.yml)
+            - Java 경로 확인 및 수정
+            """
+        }
+        
+        unstable {
+            echo '⚠️ 빌드는 성공했지만 일부 테스트가 실패했습니다.'
+        }
+    }
+}

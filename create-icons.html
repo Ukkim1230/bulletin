@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA 아이콘 생성기</title>
+</head>
+<body>
+    <h2>청년부 주보 PWA 아이콘 생성</h2>
+    <p>아래 캔버스를 우클릭해서 이미지를 저장하세요:</p>
+    
+    <h3>192x192 아이콘</h3>
+    <canvas id="icon192" width="192" height="192" style="border: 1px solid #ccc;"></canvas>
+    
+    <h3>512x512 아이콘</h3>
+    <canvas id="icon512" width="512" height="512" style="border: 1px solid #ccc;"></canvas>
+    
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // 배경 그라데이션
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // 둥근 모서리 효과
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.1);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // 하트 아이콘 그리기
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('❤️', size/2, size/2 * 0.9);
+            
+            // 텍스트 추가
+            ctx.font = `bold ${size * 0.08}px Arial`;
+            ctx.fillText('청년부', size/2, size * 0.75);
+            ctx.fillText('주보', size/2, size * 0.85);
+        }
+        
+        // 아이콘 생성
+        createIcon('icon192', 192);
+        createIcon('icon512', 512);
+        
+        // 자동 다운로드 함수
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // 버튼 추가
+        const button192 = document.createElement('button');
+        button192.textContent = '192x192 다운로드';
+        button192.onclick = () => downloadIcon('icon192', 'icon-192.png');
+        document.body.appendChild(button192);
+        
+        const button512 = document.createElement('button');
+        button512.textContent = '512x512 다운로드';
+        button512.onclick = () => downloadIcon('icon512', 'icon-512.png');
+        document.body.appendChild(button512);
+    </script>
+</body>
+</html>

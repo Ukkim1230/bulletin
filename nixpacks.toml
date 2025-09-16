@@ -1,0 +1,15 @@
+# Railway Nixpacks 설정
+[phases.setup]
+nixPkgs = ["...", "jdk17"]
+
+[phases.build]
+cmds = [
+    "chmod +x gradlew",
+    "./gradlew bootJar --no-daemon"
+]
+
+[phases.start]
+cmd = "java -Dserver.port=$PORT -jar build/libs/*.jar"
+
+[variables]
+JAVA_VERSION = "17"
