@@ -22,31 +22,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // 공개 API 및 페이지
-                .requestMatchers(
-                    new AntPathRequestMatcher("/"),
-                    new AntPathRequestMatcher("/mobile"),
-                    new AntPathRequestMatcher("/bulletin/**"),
-                    new AntPathRequestMatcher("/api/bulletin/**")
-                ).permitAll()
-                // 정적 리소스
-                .requestMatchers(
-                    new AntPathRequestMatcher("/css/**"),
-                    new AntPathRequestMatcher("/js/**"),
-                    new AntPathRequestMatcher("/images/**"),
-                    new AntPathRequestMatcher("/favicon.ico")
-                ).permitAll()
-                // H2 콘솔 (개발용)
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
-                // Swagger UI
-                .requestMatchers(
-                    new AntPathRequestMatcher("/swagger-ui/**"),
-                    new AntPathRequestMatcher("/api-docs/**"),
-                    new AntPathRequestMatcher("/v3/api-docs/**")
-                ).permitAll()
-                // 관리자 페이지는 인증 필요
-                .requestMatchers(new AntPathRequestMatcher("/admin/**")).hasRole("ADMIN")
-                .anyRequest().authenticated()
+                // 모든 경로 허용 (로그인 기능 비활성화)
+                .anyRequest().permitAll()
             )
             .csrf(csrf -> csrf
                 // H2 콘솔을 위해 CSRF 비활성화
@@ -58,15 +35,9 @@ public class SecurityConfig {
                 // H2 콘솔을 위해 frame options 비활성화
                 .frameOptions().sameOrigin()
             )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/admin", true)
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutSuccessUrl("/")
-                .permitAll()
-            );
+            // 로그인/로그아웃 기능 비활성화
+            .formLogin(form -> form.disable())
+            .logout(logout -> logout.disable());
 
         return http.build();
     }

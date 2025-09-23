@@ -20,12 +20,14 @@ public class BulletinWebController {
     private final BulletinService bulletinService;
     
     @GetMapping("/")
-    public String home(Model model) {
-        log.info("메인 페이지 요청");
-        BulletinService.BulletinData bulletin = bulletinService.getTodayBulletin();
-        model.addAttribute("bulletin", bulletin);
-        model.addAttribute("currentDate", LocalDate.now());
-        return "index";
+    public String home() {
+        log.info("루트 경로 접속 - 모바일 주보로 리다이렉트");
+        try {
+            return "redirect:/mobile";
+        } catch (Exception e) {
+            log.error("홈 페이지 오류: ", e);
+            return "error";
+        }
     }
     
     @GetMapping("/bulletin")
