@@ -1,14 +1,18 @@
 package com.church.bulletin.controller.web;
 
 import com.church.bulletin.service.BulletinService;
+import com.church.bulletin.service.QRCodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDate;
 
@@ -18,6 +22,10 @@ import java.time.LocalDate;
 public class BulletinWebController {
     
     private final BulletinService bulletinService;
+    private final QRCodeService qrCodeService;
+    
+    @Value("${app.url:http://localhost:8080}")
+    private String appUrl;
     
     @GetMapping("/")
     public String home(Model model) {
@@ -25,6 +33,12 @@ public class BulletinWebController {
         BulletinService.BulletinData bulletin = bulletinService.getTodayBulletin();
         model.addAttribute("bulletin", bulletin);
         model.addAttribute("currentDate", LocalDate.now());
+        
+        // QR 코드 생성 (현재 URL)
+        String qrCodeImage = qrCodeService.generateQRCodeImage(appUrl, 250, 250);
+        model.addAttribute("qrCodeImage", qrCodeImage);
+        model.addAttribute("appUrl", appUrl);
+        
         return "mobile";
     }
     
@@ -53,6 +67,21 @@ public class BulletinWebController {
         model.addAttribute("selectedDate", date);
         model.addAttribute("currentDate", LocalDate.now());
         return "bulletin";
+    }
+    
+    /**
+     * QR 코드 생성 API
+     * @param url QR 코드에 포함할 URL
+     * @return Base64로 인코딩된 QR 코드 이미지
+     */
+    @GetMapping(value = "/qr", produces = MediaType.TEXT_PLAIN_VALUE)
+    @ResponseBody
+    public String generateQRCode(@RequestParam(defaultValue = "") String url) {
+        if (url.isEmpty()) {
+            url = appUrl;
+        }
+        log.info("QR 코드 생성 요청 - URL: {}", url);
+        return qrCodeService.generateQRCodeImage(url, 250, 250);
     }
     
 }

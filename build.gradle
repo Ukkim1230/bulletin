@@ -38,6 +38,10 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     
+    // QR Code generation
+    implementation 'com.google.zxing:core:3.5.2'
+    implementation 'com.google.zxing:javase:3.5.2'
+    
     
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
