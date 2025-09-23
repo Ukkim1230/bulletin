@@ -726,7 +726,7 @@
                 <i class="fas fa-calendar"></i>
                 <small>일정</small>
             </button>
-            <button class="nav-item active" id="nav-sermon" onclick="setActiveTab('sermon'); window.location.href='/mobile'">
+            <button class="nav-item active" id="nav-sermon" onclick="setActiveTab('sermon'); window.location.href='/'">
                 <i class="fas fa-book-open"></i>
                 <small>말씀</small>
             </button>
@@ -786,9 +786,7 @@
             const currentPath = window.location.pathname;
             
             // 경로에 따른 기본 활성 탭 설정
-            if (currentPath === '/') {
-                setActiveTab('home');
-            } else if (currentPath === '/mobile') {
+            if (currentPath === '/' || currentPath === '/mobile') {
                 setActiveTab('sermon');
             } else if (currentPath === '/bulletin') {
                 setActiveTab('calendar');

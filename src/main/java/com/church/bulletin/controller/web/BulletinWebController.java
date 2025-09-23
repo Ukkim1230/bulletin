@@ -20,14 +20,12 @@ public class BulletinWebController {
     private final BulletinService bulletinService;
     
     @GetMapping("/")
-    public String home() {
-        log.info("루트 경로 접속 - 모바일 주보로 리다이렉트");
-        try {
-            return "redirect:/mobile";
-        } catch (Exception e) {
-            log.error("홈 페이지 오류: ", e);
-            return "error";
-        }
+    public String home(Model model) {
+        log.info("메인 페이지 요청 - 모바일 주보 표시");
+        BulletinService.BulletinData bulletin = bulletinService.getTodayBulletin();
+        model.addAttribute("bulletin", bulletin);
+        model.addAttribute("currentDate", LocalDate.now());
+        return "mobile";
     }
     
     @GetMapping("/bulletin")
@@ -57,12 +55,4 @@ public class BulletinWebController {
         return "bulletin";
     }
     
-    @GetMapping("/mobile")
-    public String mobile(Model model) {
-        log.info("모바일 주보 페이지 요청");
-        BulletinService.BulletinData bulletin = bulletinService.getTodayBulletin();
-        model.addAttribute("bulletin", bulletin);
-        model.addAttribute("currentDate", LocalDate.now());
-        return "mobile";
-    }
 }
