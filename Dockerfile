@@ -37,8 +37,9 @@ RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
 # 애플리케이션 사용자 생성 (보안)
 RUN groupadd -r bulletin && useradd -r -g bulletin bulletin
 
-# 빌드된 JAR 파일 복사
-COPY --from=builder /app/build/libs/*.jar app.jar
+# 빌드된 JAR 파일 복사 및 이름 확인
+COPY --from=builder /app/build/libs/ ./
+RUN ls -la && find . -name "*.jar" -exec mv {} app.jar \;
 
 # 파일 권한 설정
 RUN chown bulletin:bulletin app.jar
