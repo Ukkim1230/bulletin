@@ -83,7 +83,37 @@ spring:
       enabled: false
 
 server:
-  port: ${SERVER_PORT:80}
+  port: ${PORT:${SERVER_PORT:80}}
+
+logging:
+  level:
+    com.church.bulletin: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+
+---
+# Railway 환경 설정
+spring:
+  config:
+    activate:
+      on-profile: railway
+  datasource:
+    url: ${DATABASE_URL:jdbc:h2:mem:testdb}
+    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
+    username: ${DATABASE_USER:sa}
+    password: ${DATABASE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  thymeleaf:
+    cache: true
+  h2:
+    console:
+      enabled: false
+
+server:
+  port: ${PORT:8080}
 
 logging:
   level:
