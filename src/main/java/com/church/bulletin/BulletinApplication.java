@@ -1,5 +1,4 @@
 package com.church.bulletin;
- 
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
