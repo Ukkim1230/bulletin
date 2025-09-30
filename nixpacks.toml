@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['gradle']
+nixPkgs = ['jdk17', 'gradle']
 
 [phases.build]
 cmds = ['chmod +x ./gradlew', './gradlew clean bootJar --no-daemon']
