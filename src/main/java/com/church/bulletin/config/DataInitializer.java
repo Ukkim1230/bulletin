@@ -20,6 +20,7 @@ public class DataInitializer implements CommandLineRunner {
     private final BibleVerseRepository bibleVerseRepository;
     private final PrayerRequestRepository prayerRequestRepository;
     private final ChurchEventRepository churchEventRepository;
+    private final BulletinPageRepository bulletinPageRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -159,6 +160,40 @@ public class DataInitializer implements CommandLineRunner {
             churchEventRepository.save(event2);
             
             log.info("교회 행사 샘플 데이터 생성 완료");
+        }
+        
+        // 주보 페이지 샘플 데이터
+        if (bulletinPageRepository.count() == 0) {
+            BulletinPage page1 = BulletinPage.builder()
+                    .pageNumber(1)
+                    .imageUrl("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%EA%B7%B8%EB%A6%B0%20%EA%B9%94%EB%81%94%ED%95%9C%20%EC%A0%95%EB%8F%88%EB%90%9C%20%EA%B5%90%ED%9A%8C%20%EC%B2%AD%EB%85%84%EB%B6%80%20%EC%A3%BC%EC%9D%BC%EC%98%88%EB%B0%B0%20%EC%88%9C%EC%84%9C%20%EC%95%88%EB%82%B4%20%EC%86%8C%EC%8B%9D%EC%A7%80%20%EC%A3%BC%EB%B3%B4%20%EB%B8%8C%EB%A1%9C%EC%8A%88%EC%96%B4-60o52wSCQieCeXgX9j2LcP5aPfu3Lj.png")
+                    .alt("청년부 주일 예배 표지")
+                    .build();
+            
+            BulletinPage page2 = BulletinPage.builder()
+                    .pageNumber(2)
+                    .imageUrl("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%EA%B7%B8%EB%A6%B0%20%EA%B9%94%EB%81%94%ED%95%9C%20%EC%A0%95%EB%8F%88%EB%90%9C%20%EA%B5%90%ED%9A%8C%20%EC%B2%AD%EB%85%84%EB%B6%80%20%EC%A3%BC%EC%9D%BC%EC%98%88%EB%B0%B0%20%EC%88%9C%EC%84%9C%20%EC%95%88%EB%82%B4%20%EC%86%8C%EC%8B%9D%EC%A7%80%20%EC%A3%BC%EB%B3%B4%20%EB%B8%8C%EB%A1%9C%EC%8A%88%EC%96%B4%20%283%29-QiPg1QPXy1pmnFMEL3OzebM9P5n9JR.png")
+                    .alt("예배 순서")
+                    .build();
+            
+            BulletinPage page3 = BulletinPage.builder()
+                    .pageNumber(3)
+                    .imageUrl("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%EA%B7%B8%EB%A6%B0%20%EA%B9%94%EB%81%94%ED%95%9C%20%EC%A0%95%EB%8F%88%EB%90%9C%20%EA%B5%90%ED%9A%8C%20%EC%B2%AD%EB%85%84%EB%B6%80%20%EC%A3%BC%EC%9D%BC%EC%98%88%EB%B0%B0%20%EC%88%9C%EC%84%9C%20%EC%95%88%EB%82%B4%20%EC%86%8C%EC%8B%9D%EC%A7%80%20%EC%A3%BC%EB%B3%B4%20%EB%B8%8C%EB%A1%9C%EC%8A%88%EC%96%B4%20%281%29-CSgz27mf2l3mAP8N72wroPBiDT5fmC.png")
+                    .alt("청년부 안내")
+                    .build();
+            
+            BulletinPage page4 = BulletinPage.builder()
+                    .pageNumber(4)
+                    .imageUrl("https://hebbkx1anhila5yf.public.blob.vercel-storage.com/%EA%B7%B8%EB%A6%B0%20%EA%B9%94%EB%81%94%ED%95%9C%20%EC%A0%95%EB%8F%88%EB%90%9C%20%EA%B5%90%ED%9A%8C%20%EC%B2%AD%EB%85%84%EB%B6%80%20%EC%A3%BC%EC%9D%BC%EC%98%88%EB%B0%B0%20%EC%88%9C%EC%84%9C%20%EC%95%88%EB%82%B4%20%EC%86%8C%EC%8B%9D%EC%A7%80%20%EC%A3%BC%EB%B3%B4%20%EB%B8%8C%EB%A1%9C%EC%8A%88%EC%96%B4%20%282%29-4E4QwfbBHlPaLcz7nAJfSPlTvC1SCI.png")
+                    .alt("청년부 소식")
+                    .build();
+            
+            bulletinPageRepository.save(page1);
+            bulletinPageRepository.save(page2);
+            bulletinPageRepository.save(page3);
+            bulletinPageRepository.save(page4);
+            
+            log.info("주보 페이지 샘플 데이터 생성 완료");
         }
         
         log.info("샘플 데이터 초기화 완료");

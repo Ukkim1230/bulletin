@@ -1,0 +1,8 @@
+<svg width="200" height="300" viewBox="0 0 200 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="200" height="300" fill="#F5F5F5"/>
+<path d="M80 80H120V120H80V80Z" fill="#D9D9D9"/>
+<path d="M80 140H120V180H80V140Z" fill="#D9D9D9"/>
+<path d="M80 200H120V240H80V200Z" fill="#D9D9D9"/>
+<text x="100" y="270" font-family="Arial, sans-serif" font-size="14" fill="#999" text-anchor="middle">악보 이미지</text>
+</svg>
+

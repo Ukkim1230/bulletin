@@ -12,17 +12,17 @@
                 <i class="fas fa-calendar"></i>
                 <small>일정</small>
             </button>
-            <button class="nav-item active" id="nav-sermon" onclick="setActiveTab('sermon')">
+            <button class="nav-item active" id="nav-bulletin" onclick="setActiveTab('bulletin'); openBulletinViewer()">
                 <i class="fas fa-book-open"></i>
-                <small>말씀</small>
+                <small>주보</small>
+            </button>
+            <button class="nav-item" id="nav-music" onclick="setActiveTab('music'); window.location.href='/sheet-music'">
+                <i class="fas fa-music"></i>
+                <small>악보</small>
             </button>
             <button class="nav-item" id="nav-news" onclick="setActiveTab('news'); scrollToSection('announcements')">
                 <i class="fas fa-users"></i>
                 <small>소식</small>
-            </button>
-            <button class="nav-item" id="nav-contact" onclick="setActiveTab('contact'); scrollToSection('contact')">
-                <i class="fas fa-phone"></i>
-                <small>연락처</small>
             </button>
         </div>
     </nav>
@@ -106,14 +106,19 @@
             
             // 경로에 따른 기본 활성 탭 설정
             if (currentPath === '/' || currentPath === '/mobile') {
-                const sermonTab = document.getElementById('nav-sermon');
-                if (sermonTab) {
-                    sermonTab.classList.add('active');
+                const homeTab = document.getElementById('nav-home');
+                if (homeTab) {
+                    homeTab.classList.add('active');
                 }
             } else if (currentPath === '/bulletin') {
-                const calendarTab = document.getElementById('nav-calendar');
-                if (calendarTab) {
-                    calendarTab.classList.add('active');
+                const bulletinTab = document.getElementById('nav-bulletin');
+                if (bulletinTab) {
+                    bulletinTab.classList.add('active');
+                }
+            } else if (currentPath.startsWith('/sheet-music')) {
+                const musicTab = document.getElementById('nav-music');
+                if (musicTab) {
+                    musicTab.classList.add('active');
                 }
             }
         });

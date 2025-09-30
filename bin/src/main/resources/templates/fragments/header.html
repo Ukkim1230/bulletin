@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        /* 드롭다운 메뉴 스타일 */
+        .dropdown-menu-custom {
+            position: absolute;
+            top: calc(100% + 0.75rem);
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+            min-width: 220px;
+            z-index: 1000;
+            overflow: hidden;
+            padding: 0.5rem;
+            display: none;
+        }
+        
+        .dropdown-menu-custom.show {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            animation: slideDown 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-15px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .dropdown-item-custom {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            color: #1f2937;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .dropdown-item-custom::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: #667eea;
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+        
+        .dropdown-item-custom:hover {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: #667eea;
+            transform: translateX(4px);
+            padding-left: 1.25rem;
+        }
+        
+        .dropdown-item-custom:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .dropdown-item-custom:active {
+            transform: translateX(2px) scale(0.98);
+        }
+        
+        .dropdown-item-custom i {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            margin-right: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item-custom:hover i {
+            transform: scale(1.1);
+            color: #667eea;
+        }
+        
+        /* 햄버거 버튼 활성화 스타일 */
+        #menuToggleBtn.active {
+            background: #f3f4f6 !important;
+            color: #667eea !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 모던 헤더 (Header) -->
+    <header class="mobile-header" th:fragment="header(currentDate)">
+        <div class="container d-flex align-items-center justify-content-between px-4" style="height: 4rem;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center justify-content-center rounded-2" 
+                     style="width: 2rem; height: 2rem; background: var(--primary);">
+                    <span class="fw-bold" style="color: var(--primary-foreground); font-size: 0.875rem;">주</span>
+                </div>
+                <div>
+                    <h1 class="fw-bold mb-0" style="font-size: 1.125rem; color: var(--foreground);">주사랑교회 청년부</h1>
+                    <p class="mb-0" style="font-size: 0.75rem; color: var(--muted-foreground);" 
+                       th:text="'주보 ' + ${#temporals.format(currentDate, 'yyyy.MM.dd')}">주보 2024.03.19</p>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2 position-relative">
+                <button class="btn btn-sm p-2" style="background: none; border: none; color: var(--foreground); width: 2.5rem; height: 2.5rem; border-radius: 0.375rem;" 
+                        onmouseover="this.style.background='var(--accent)'" 
+                        onmouseout="this.style.background='none'">
+                    <i class="fas fa-qrcode" style="font-size: 1.25rem;"></i>
+                </button>
+                <button class="btn btn-sm p-2" style="background: none; border: none; color: var(--foreground); width: 2.5rem; height: 2.5rem; border-radius: 0.375rem;" 
+                        onmouseover="this.style.background='var(--accent)'" 
+                        onmouseout="this.style.background='none'">
+                    <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                </button>
+                
+                <!-- 햄버거 메뉴 버튼 -->
+                <div class="position-relative" style="position: relative;">
+                    <button id="menuToggleBtn" class="btn btn-sm p-2" style="background: none; border: none; color: var(--foreground); width: 2.5rem; height: 2.5rem; border-radius: 0.375rem;" 
+                            onmouseover="this.style.background='var(--accent)'" 
+                            onmouseout="if(!this.classList.contains('active')) this.style.background='none'"
+                            onclick="toggleDropdownMenu(event)">
+                        <i class="fas fa-bars" style="font-size: 1.25rem;"></i>
+                    </button>
+                    
+                    <!-- 드롭다운 메뉴 -->
+                    <div id="dropdownMenu" class="dropdown-menu-custom">
+                        <a href="/" class="dropdown-item-custom">
+                            <i class="fas fa-home"></i>홈
+                        </a>
+                        <a href="/#schedule" class="dropdown-item-custom" onclick="handleMenuClick(event, 'schedule')">
+                            <i class="fas fa-calendar"></i>일정
+                        </a>
+                        <a href="/#bible-verses" class="dropdown-item-custom" onclick="handleMenuClick(event, 'bible-verses')">
+                            <i class="fas fa-book-open"></i>말씀
+                        </a>
+                        <a href="/sheet-music" class="dropdown-item-custom">
+                            <i class="fas fa-music"></i>악보
+                        </a>
+                        <a href="/#announcements" class="dropdown-item-custom" onclick="handleMenuClick(event, 'announcements')">
+                            <i class="fas fa-users"></i>소식
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 드롭다운 메뉴 스크립트 -->
+        <script>
+            function toggleDropdownMenu(event) {
+                event.stopPropagation();
+                const menu = document.getElementById('dropdownMenu');
+                const menuBtn = document.getElementById('menuToggleBtn');
+                
+                if (menu && menuBtn) {
+                    if (menu.classList.contains('show')) {
+                        menu.classList.remove('show');
+                        menuBtn.classList.remove('active');
+                    } else {
+                        menu.classList.add('show');
+                        menuBtn.classList.add('active');
+                    }
+                }
+            }
+            
+            function handleMenuClick(event, sectionId) {
+                event.preventDefault();
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                // 메뉴 닫기
+                closeDropdownMenu();
+            }
+            
+            function closeDropdownMenu() {
+                const menu = document.getElementById('dropdownMenu');
+                const menuBtn = document.getElementById('menuToggleBtn');
+                if (menu) {
+                    menu.classList.remove('show');
+                }
+                if (menuBtn) {
+                    menuBtn.classList.remove('active');
+                }
+            }
+            
+            // 메뉴 외부 클릭 시 닫기
+            document.addEventListener('click', function(event) {
+                const menu = document.getElementById('dropdownMenu');
+                const menuBtn = document.getElementById('menuToggleBtn');
+                
+                if (menu && menuBtn) {
+                    if (!menuBtn.contains(event.target) && !menu.contains(event.target)) {
+                        closeDropdownMenu();
+                    }
+                }
+            });
+            
+            // ESC 키로 메뉴 닫기
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeDropdownMenu();
+                }
+            });
+        </script>
+    </header>
+</body>
+</html>

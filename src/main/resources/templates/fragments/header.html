@@ -1,39 +1,93 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
-    <!-- 모던 헤더 (Header) -->
-    <header class="mobile-header" th:fragment="header(currentDate)">
-        <div class="container d-flex align-items-center justify-content-between px-4" style="height: 4rem;">
-            <div class="d-flex align-items-center gap-3">
-                <div class="d-flex align-items-center justify-content-center rounded-2" 
-                     style="width: 2rem; height: 2rem; background: var(--primary);">
-                    <span class="fw-bold" style="color: var(--primary-foreground); font-size: 0.875rem;">주</span>
+    <!-- 헤더 -->
+    <header th:fragment="header(currentDate)" style="position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);">
+        <div class="container" style="display: flex; height: 4rem; align-items: center; justify-content: space-between; padding: 0 1rem;">
+            <!-- 좌측: 로고 + 제목 -->
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 2rem; height: 2rem; background: var(--primary); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                    <span style="color: var(--primary-foreground); font-weight: bold; font-size: 0.875rem;">주</span>
                 </div>
                 <div>
-                    <h1 class="fw-bold mb-0" style="font-size: 1.125rem; color: var(--foreground);">주사랑교회 청년부</h1>
-                    <p class="mb-0" style="font-size: 0.75rem; color: var(--muted-foreground);" 
+                    <h1 style="font-weight: bold; font-size: 1.125rem; color: var(--foreground); margin: 0;">주사랑교회 청년부</h1>
+                    <p style="font-size: 0.75rem; color: var(--muted-foreground); margin: 0;" 
                        th:text="'주보 ' + ${#temporals.format(currentDate, 'yyyy.MM.dd')}">주보 2024.03.19</p>
                 </div>
             </div>
-            
-            <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-sm p-2" style="background: none; border: none; color: var(--foreground); width: 2.5rem; height: 2.5rem; border-radius: 0.375rem;" 
+
+            <!-- 우측: 아이콘 버튼들 -->
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button type="button" style="background: transparent; border: none; padding: 0.5rem; cursor: pointer; border-radius: 0.375rem; transition: background-color 0.2s;" 
                         onmouseover="this.style.background='var(--accent)'" 
-                        onmouseout="this.style.background='none'">
-                    <i class="fas fa-qrcode" style="font-size: 1.25rem;"></i>
+                        onmouseout="this.style.background='transparent'">
+                    <i class="fas fa-qrcode" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
                 </button>
-                <button class="btn btn-sm p-2" style="background: none; border: none; color: var(--foreground); width: 2.5rem; height: 2.5rem; border-radius: 0.375rem;" 
+                <button type="button" style="background: transparent; border: none; padding: 0.5rem; cursor: pointer; border-radius: 0.375rem; transition: background-color 0.2s;" 
                         onmouseover="this.style.background='var(--accent)'" 
-                        onmouseout="this.style.background='none'">
-                    <i class="fas fa-bell" style="font-size: 1.25rem;"></i>
+                        onmouseout="this.style.background='transparent'">
+                    <i class="fas fa-bell" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
                 </button>
-                <button class="btn btn-sm p-2" style="background: none; border: none; color: var(--foreground); width: 2.5rem; height: 2.5rem; border-radius: 0.375rem;" 
+                <button type="button" id="menuBtn" style="background: transparent; border: none; padding: 0.5rem; cursor: pointer; border-radius: 0.375rem; transition: background-color 0.2s;" 
                         onmouseover="this.style.background='var(--accent)'" 
-                        onmouseout="this.style.background='none'">
-                    <i class="fas fa-bars" style="font-size: 1.25rem;"></i>
+                        onmouseout="this.style.background='transparent'"
+                        onclick="
+                            var menu = document.getElementById('menuDropdown');
+                            var icon = document.getElementById('menuIcon');
+                            if (menu.style.display === 'none' || menu.style.display === '') {
+                                menu.style.display = 'block';
+                                icon.className = 'fas fa-times';
+                            } else {
+                                menu.style.display = 'none';
+                                icon.className = 'fas fa-bars';
+                            }
+                        ">
+                    <i id="menuIcon" class="fas fa-bars" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
                 </button>
             </div>
         </div>
+
+        <!-- 드롭다운 메뉴 -->
+        <div id="menuDropdown" style="position: absolute; top: 4rem; left: 0; right: 0; background: var(--card); border-bottom: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); display: none;">
+            <div class="container" style="padding: 1rem;">
+                <nav style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                    <a href="/" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars';" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
+                        <i class="fas fa-home" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
+                        <span>홈</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars'; setTimeout(function(){ document.getElementById('schedule').scrollIntoView({behavior: 'smooth'}); }, 100);" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
+                        <i class="fas fa-calendar" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
+                        <span>일정</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars'; openBulletinViewer();" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
+                        <i class="fas fa-book-open" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
+                        <span>주보</span>
+                    </a>
+                    <a href="/sheet-music" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars';" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
+                        <i class="fas fa-music" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
+                        <span>악보</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars'; setTimeout(function(){ document.getElementById('bible-verses').scrollIntoView({behavior: 'smooth'}); }, 100);" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
+                        <i class="fas fa-book" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
+                        <span>말씀</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars'; setTimeout(function(){ document.getElementById('announcements').scrollIntoView({behavior: 'smooth'}); }, 100);" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
+                        <i class="fas fa-users" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
+                        <span>소식</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars'; setTimeout(function(){ var contact = document.getElementById('contact'); if(contact) contact.scrollIntoView({behavior: 'smooth'}); }, 100);" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
+                        <i class="fas fa-phone" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
+                        <span>연락처</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
     </header>
+
+    <style>
+        .menu-btn:hover {
+            background: rgba(0, 0, 0, 0.05) !important;
+        }
+    </style>
 </body>
 </html>

@@ -25,12 +25,7 @@ public class SecurityConfig {
                 // 모든 경로 허용 (로그인 기능 비활성화)
                 .anyRequest().permitAll()
             )
-            .csrf(csrf -> csrf
-                // H2 콘솔을 위해 CSRF 비활성화
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/h2-console/**"))
-                // API 엔드포인트에 대해 CSRF 비활성화
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/api/**"))
-            )
+            .csrf(csrf -> csrf.disable()) // CSRF 완전 비활성화 (개발용)
             .headers(headers -> headers
                 // H2 콘솔을 위해 frame options 비활성화
                 .frameOptions().sameOrigin()

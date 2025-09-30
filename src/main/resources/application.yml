@@ -61,6 +61,17 @@ server:
 app:
   url: https://bulletin-production.up.railway.app  # Railway 배포 환경 URL
 
+# 파일 업로드 설정
+file:
+  upload:
+    bulletin-dir: uploads/bulletin-images/
+
+# Cloudinary 설정
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dxmkhavyb}
+  api-key: ${CLOUDINARY_API_KEY:149669458686891}
+  api-secret: ${CLOUDINARY_API_SECRET:z94Qqz3591tHOAcuiXfmzs555_U}
+
 # 로깅 설정
 logging:
   level:
