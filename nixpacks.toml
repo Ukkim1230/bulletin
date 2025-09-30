@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ['...', 'gradle']
+nixPkgs = ['gradle']
 
 [phases.build]
-cmds = ['./gradlew clean bootJar --no-daemon']
+cmds = ['chmod +x ./gradlew', './gradlew clean bootJar --no-daemon']
 
 [start]
-cmd = 'java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar build/libs/*.jar'
+cmd = 'java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar $(ls build/libs/*.jar | head -1)'
