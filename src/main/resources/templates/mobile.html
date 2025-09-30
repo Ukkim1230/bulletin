@@ -461,6 +461,14 @@
             <i class="fas fa-edit"></i>
         </button>
         
+        <button class="bulletin-add-btn" onclick="openAddPageDialog()">
+            <i class="fas fa-plus"></i>
+        </button>
+        
+        <button class="bulletin-delete-btn" onclick="deleteCurrentPage()">
+            <i class="fas fa-trash"></i>
+        </button>
+        
         <div class="bulletin-page-indicator">
             <span id="currentPageNum">1</span> / <span id="totalPageNum">4</span>
         </div>
@@ -482,6 +490,60 @@
             <button class="bulletin-dot" onclick="goToPage(1)"></button>
             <button class="bulletin-dot" onclick="goToPage(2)"></button>
             <button class="bulletin-dot" onclick="goToPage(3)"></button>
+        </div>
+    </div>
+
+    <!-- 페이지 추가 모달 -->
+    <div id="addPageDialog" class="edit-dialog" style="display: none;">
+        <div class="edit-dialog-overlay" onclick="closeAddPageDialog()"></div>
+        <div class="edit-dialog-content">
+            <div class="edit-dialog-header">
+                <h3 class="edit-dialog-title">새 페이지 추가</h3>
+                <p class="edit-dialog-description">새로운 주보 페이지를 추가합니다.</p>
+            </div>
+            
+            <div class="edit-dialog-body">
+                <div class="form-group">
+                    <label for="addPageNumber" class="form-label">페이지 번호</label>
+                    <input type="number" id="addPageNumber" class="form-input" placeholder="1" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="addImageUrl" class="form-label">이미지 URL</label>
+                    <input type="text" id="addImageUrl" class="form-input" placeholder="https://example.com/image.jpg">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">또는 이미지 업로드</label>
+                    <div class="upload-area">
+                        <input type="file" id="addImageFileInput" accept="image/*" style="display: none;">
+                        <button type="button" class="btn btn-outline upload-btn" onclick="document.getElementById('addImageFileInput').click()">
+                            <i class="fas fa-upload"></i> 파일 선택
+                        </button>
+                        <span id="addUploadFileName" class="upload-file-name"></span>
+                        <div id="addUploadProgress" class="upload-progress" style="display: none;">
+                            <div class="upload-progress-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="addAlt" class="form-label">이미지 설명</label>
+                    <input type="text" id="addAlt" class="form-input" placeholder="이미지 설명을 입력하세요">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">미리보기</label>
+                    <div class="preview-container">
+                        <img id="addPreviewImage" src="" alt="미리보기" class="preview-image" style="display: none;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="edit-dialog-footer">
+                <button class="btn btn-outline" onclick="closeAddPageDialog()">취소</button>
+                <button class="btn btn-primary" onclick="saveNewPage()">추가</button>
+            </div>
         </div>
     </div>
 
@@ -542,7 +604,7 @@
             z-index: 9999;
         }
         
-        .bulletin-home-btn, .bulletin-edit-btn {
+        .bulletin-home-btn, .bulletin-edit-btn, .bulletin-add-btn, .bulletin-delete-btn {
             position: absolute;
             top: 1rem;
             z-index: 20;
@@ -567,13 +629,36 @@
             left: 4rem;
         }
         
+        .bulletin-add-btn {
+            left: 7rem;
+            background: rgba(102, 126, 234, 0.9);
+        }
+        
+        .bulletin-delete-btn {
+            left: 10rem;
+            background: rgba(239, 68, 68, 0.9);
+        }
+        
         .bulletin-home-btn:hover, .bulletin-edit-btn:hover {
             background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .bulletin-add-btn:hover {
+            background: rgba(102, 126, 234, 1);
+        }
+        
+        .bulletin-delete-btn:hover {
+            background: rgba(239, 68, 68, 1);
         }
         
         .bulletin-home-btn i, .bulletin-edit-btn i {
             font-size: 1.25rem;
             color: var(--foreground);
+        }
+        
+        .bulletin-add-btn i, .bulletin-delete-btn i {
+            font-size: 1.25rem;
+            color: white;
         }
         
         .bulletin-page-indicator {
@@ -940,6 +1025,125 @@
             document.getElementById('editDialog').style.display = 'none';
         }
         
+        // 페이지 추가 모달 열기
+        function openAddPageDialog() {
+            const nextPageNumber = bulletinPages.length + 1;
+            document.getElementById('addPageNumber').value = nextPageNumber;
+            document.getElementById('addImageUrl').value = '';
+            document.getElementById('addAlt').value = '';
+            document.getElementById('addPreviewImage').style.display = 'none';
+            document.getElementById('addPageDialog').style.display = 'flex';
+        }
+        
+        // 페이지 추가 모달 닫기
+        function closeAddPageDialog() {
+            document.getElementById('addPageDialog').style.display = 'none';
+        }
+        
+        // 새 페이지 저장
+        async function saveNewPage() {
+            const pageNumber = parseInt(document.getElementById('addPageNumber').value);
+            const imageUrl = document.getElementById('addImageUrl').value;
+            const alt = document.getElementById('addAlt').value;
+            
+            if (!pageNumber || pageNumber < 1) {
+                alert('페이지 번호를 입력해주세요.');
+                return;
+            }
+            
+            if (!imageUrl) {
+                alert('이미지 URL을 입력해주세요.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/bulletin-pages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pageNumber: pageNumber,
+                        imageUrl: imageUrl,
+                        alt: alt
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('저장 실패');
+                }
+                
+                // 페이지 목록 새로고침
+                bulletinPages = [];
+                await loadBulletinPages();
+                
+                // 점 표시 업데이트
+                updateDots();
+                
+                // 새로 추가된 페이지로 이동
+                goToPage(bulletinPages.length - 1);
+                closeAddPageDialog();
+                
+                alert('새 페이지가 추가되었습니다!');
+            } catch (error) {
+                console.error('페이지 추가 실패:', error);
+                alert('페이지 추가에 실패했습니다.');
+            }
+        }
+        
+        // 현재 페이지 삭제
+        async function deleteCurrentPage() {
+            if (bulletinPages.length <= 1) {
+                alert('최소 1개의 페이지는 필요합니다.');
+                return;
+            }
+            
+            if (!confirm(`${currentPage + 1}페이지를 삭제하시겠습니까?`)) {
+                return;
+            }
+            
+            const pageId = bulletinPages[currentPage].id;
+            
+            try {
+                const response = await fetch(`/api/bulletin-pages/${pageId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('삭제 실패');
+                }
+                
+                // 페이지 목록 새로고침
+                bulletinPages = [];
+                await loadBulletinPages();
+                
+                // 점 표시 업데이트
+                updateDots();
+                
+                // 이전 페이지로 이동 (현재 페이지가 마지막이면)
+                const newPage = currentPage >= bulletinPages.length ? bulletinPages.length - 1 : currentPage;
+                goToPage(newPage);
+                
+                alert('페이지가 삭제되었습니다!');
+            } catch (error) {
+                console.error('페이지 삭제 실패:', error);
+                alert('페이지 삭제에 실패했습니다.');
+            }
+        }
+        
+        // 점 표시 업데이트
+        function updateDots() {
+            const dotsContainer = document.querySelector('.bulletin-dots');
+            dotsContainer.innerHTML = '';
+            
+            bulletinPages.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.className = 'bulletin-dot';
+                dot.onclick = () => goToPage(index);
+                dotsContainer.appendChild(dot);
+            });
+        }
+        
         async function saveEdit() {
             const newImageUrl = document.getElementById('editImageUrl').value;
             const newAlt = document.getElementById('editAlt').value;
@@ -1039,8 +1243,65 @@
             }
         }
         
+        // 추가 페이지 이미지 업로드 처리
+        async function uploadAddImageFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const progressBar = document.querySelector('#addUploadProgress .upload-progress-bar');
+            const progressContainer = document.getElementById('addUploadProgress');
+            
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            try {
+                // 프로그레스 바 애니메이션
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    if (progress >= 90) {
+                        clearInterval(progressInterval);
+                    }
+                    progressBar.style.width = progress + '%';
+                }, 100);
+                
+                const response = await fetch('/api/bulletin-pages/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                if (!response.ok) {
+                    throw new Error('업로드 실패');
+                }
+                
+                const data = await response.json();
+                
+                // 업로드된 이미지 URL 설정
+                const imageUrl = data.imageUrl;
+                document.getElementById('addImageUrl').value = imageUrl;
+                document.getElementById('addPreviewImage').src = imageUrl;
+                document.getElementById('addPreviewImage').style.display = 'block';
+                document.getElementById('addUploadFileName').textContent = data.fileName;
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 500);
+                
+                return imageUrl;
+            } catch (error) {
+                console.error('이미지 업로드 실패:', error);
+                alert('이미지 업로드에 실패했습니다.');
+                progressContainer.style.display = 'none';
+                return null;
+            }
+        }
+        
         // 이미지 URL 입력 시 미리보기 업데이트
         document.addEventListener('DOMContentLoaded', function() {
+            // 편집 모달 이미지 URL 입력
             const editImageUrlInput = document.getElementById('editImageUrl');
             if (editImageUrlInput) {
                 editImageUrlInput.addEventListener('input', function(e) {
@@ -1051,7 +1312,7 @@
                 });
             }
             
-            // 파일 선택 이벤트
+            // 파일 선택 이벤트 (편집 모달)
             const imageFileInput = document.getElementById('imageFileInput');
             if (imageFileInput) {
                 imageFileInput.addEventListener('change', async function(e) {
@@ -1070,6 +1331,41 @@
                         }
                         
                         await uploadImageFile(file);
+                    }
+                });
+            }
+            
+            // 추가 모달 이미지 URL 입력
+            const addImageUrlInput = document.getElementById('addImageUrl');
+            if (addImageUrlInput) {
+                addImageUrlInput.addEventListener('input', function(e) {
+                    const previewImage = document.getElementById('addPreviewImage');
+                    if (previewImage) {
+                        previewImage.src = e.target.value || '';
+                        previewImage.style.display = e.target.value ? 'block' : 'none';
+                    }
+                });
+            }
+            
+            // 파일 선택 이벤트 (추가 모달)
+            const addImageFileInput = document.getElementById('addImageFileInput');
+            if (addImageFileInput) {
+                addImageFileInput.addEventListener('change', async function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        // 파일 타입 검증
+                        if (!file.type.startsWith('image/')) {
+                            alert('이미지 파일만 업로드할 수 있습니다.');
+                            return;
+                        }
+                        
+                        // 파일 크기 검증 (10MB)
+                        if (file.size > 10 * 1024 * 1024) {
+                            alert('파일 크기는 10MB 이하여야 합니다.');
+                            return;
+                        }
+                        
+                        await uploadAddImageFile(file);
                     }
                 });
             }
