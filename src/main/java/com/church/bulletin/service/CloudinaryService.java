@@ -27,11 +27,7 @@ public class CloudinaryService {
         try {
             Map<String, Object> uploadParams = ObjectUtils.asMap(
                     "folder", folder,
-                    "resource_type", "image",
-                    "transformation", ObjectUtils.asMap(
-                            "quality", "auto:good",
-                            "fetch_format", "auto"
-                    )
+                    "resource_type", "image"
             );
             
             Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), uploadParams);
@@ -52,7 +48,7 @@ public class CloudinaryService {
      */
     public void deleteImage(String publicId) {
         try {
-            Map<?, ?> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
             log.info("Cloudinary 이미지 삭제 성공: {}", publicId);
         } catch (IOException e) {
             log.error("Cloudinary 이미지 삭제 실패", e);
