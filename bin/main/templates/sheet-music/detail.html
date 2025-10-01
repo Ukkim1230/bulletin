@@ -90,14 +90,33 @@
                     <!-- 액션 버튼들 -->
                     <div class="d-grid gap-2">
                         <div class="row g-2">
-                            <div class="col-6" th:if="${sheetMusic.filePath}">
+                            <!-- Cloudinary URL이 있는 경우 (배포 환경) -->
+                            <div class="col-6" th:if="${sheetMusic.imageUrl != null and sheetMusic.imageUrl.contains('cloudinary')}">
+                                <a th:href="${sheetMusic.imageUrl}" 
+                                   class="btn w-100" 
+                                   style="background: var(--primary); color: var(--primary-foreground);"
+                                   download>
+                                    <i class="fas fa-download me-2"></i>다운로드
+                                </a>
+                            </div>
+                            <div class="col-6" th:if="${sheetMusic.imageUrl != null and sheetMusic.imageUrl.contains('cloudinary')}">
+                                <a th:href="${sheetMusic.imageUrl}" 
+                                   class="btn w-100" 
+                                   style="background: var(--secondary); border: 1px solid var(--border);"
+                                   target="_blank">
+                                    <i class="fas fa-eye me-2"></i>미리보기
+                                </a>
+                            </div>
+                            
+                            <!-- 로컬 파일이 있는 경우 (로컬 환경) -->
+                            <div class="col-6" th:if="${sheetMusic.filePath != null and (sheetMusic.imageUrl == null or !sheetMusic.imageUrl.contains('cloudinary'))}">
                                 <a th:href="@{'/sheet-music/' + ${sheetMusic.id} + '/download'}" 
                                    class="btn w-100" 
                                    style="background: var(--primary); color: var(--primary-foreground);">
                                     <i class="fas fa-download me-2"></i>다운로드
                                 </a>
                             </div>
-                            <div class="col-6" th:if="${sheetMusic.filePath}">
+                            <div class="col-6" th:if="${sheetMusic.filePath != null and (sheetMusic.imageUrl == null or !sheetMusic.imageUrl.contains('cloudinary'))}">
                                 <a th:href="@{'/sheet-music/' + ${sheetMusic.id} + '/view'}" 
                                    class="btn w-100" 
                                    style="background: var(--secondary); border: 1px solid var(--border);"
@@ -105,7 +124,9 @@
                                     <i class="fas fa-eye me-2"></i>미리보기
                                 </a>
                             </div>
-                            <div th:unless="${sheetMusic.filePath}" class="col-12">
+                            
+                            <!-- 파일이 없는 경우 -->
+                            <div th:if="${sheetMusic.filePath == null and (sheetMusic.imageUrl == null or !sheetMusic.imageUrl.contains('cloudinary'))}" class="col-12">
                                 <div class="alert alert-warning mb-0">
                                     <i class="fas fa-exclamation-circle me-2"></i>악보 파일이 없습니다
                                 </div>
