@@ -4,6 +4,7 @@ import com.church.bulletin.entity.SheetMusic;
 import com.church.bulletin.repository.SheetMusicRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,10 @@ import java.util.Optional;
 public class SheetMusicService {
     
     private final SheetMusicRepository sheetMusicRepository;
+    private final CloudinaryService cloudinaryService;
+    
+    @Value("${spring.profiles.active:default}")
+    private String activeProfile;
     
     // 업로드 디렉토리 경로
     private static final String UPLOAD_DIR = "uploads/sheet-music";
@@ -110,35 +115,52 @@ public class SheetMusicService {
     public SheetMusic saveSheetMusicWithFile(SheetMusic sheetMusic, MultipartFile file) {
         if (file != null && !file.isEmpty()) {
             try {
-                // 간단한 파일 저장 로직
-                String fileName = file.getOriginalFilename();
-                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-                String savedFileName = timestamp + "_" + fileName;
-                
-                // 업로드 디렉토리 생성
-                Path uploadPath = Paths.get(UPLOAD_DIR);
-                Files.createDirectories(uploadPath);
-                
-                // 파일 저장
-                Path filePath = uploadPath.resolve(savedFileName);
-                Files.copy(file.getInputStream(), filePath);
-                
-                // 악보 정보에 파일 정보 설정
-                sheetMusic.setFileName(fileName);
-                sheetMusic.setFilePath(filePath.toString());
-                sheetMusic.setFileSize(file.getSize());
-                sheetMusic.setContentType(file.getContentType());
-                
-                // 이미지 파일인 경우 imageUrl도 설정
                 String contentType = file.getContentType();
-                if (contentType != null && contentType.startsWith("image/")) {
-                    // 웹에서 접근 가능한 URL 생성
-                    String imageUrl = "/" + UPLOAD_DIR + "/" + savedFileName;
-                    sheetMusic.setImageUrl(imageUrl);
-                    log.info("이미지 URL 설정: {}", imageUrl);
-                }
+                boolean isImage = contentType != null && contentType.startsWith("image/");
                 
-                log.info("파일 업로드 성공: {}", filePath.toString());
+                // Railway 프로필이면 Cloudinary 사용, 로컬이면 파일 시스템 사용
+                if ("railway".equals(activeProfile)) {
+                    // Cloudinary 사용
+                    log.info("Cloudinary를 사용하여 파일 업로드 시작");
+                    String imageUrl = cloudinaryService.uploadImage(file, "sheet-music");
+                    
+                    sheetMusic.setFileName(file.getOriginalFilename());
+                    sheetMusic.setImageUrl(imageUrl);
+                    sheetMusic.setFileSize(file.getSize());
+                    sheetMusic.setContentType(contentType);
+                    
+                    log.info("Cloudinary 업로드 성공: {}", imageUrl);
+                } else {
+                    // 로컬 파일 시스템 사용
+                    log.info("로컬 파일 시스템을 사용하여 파일 업로드 시작");
+                    String fileName = file.getOriginalFilename();
+                    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+                    String savedFileName = timestamp + "_" + fileName;
+                    
+                    // 업로드 디렉토리 생성
+                    Path uploadPath = Paths.get(UPLOAD_DIR);
+                    Files.createDirectories(uploadPath);
+                    
+                    // 파일 저장
+                    Path filePath = uploadPath.resolve(savedFileName);
+                    Files.copy(file.getInputStream(), filePath);
+                    
+                    // 악보 정보에 파일 정보 설정
+                    sheetMusic.setFileName(fileName);
+                    sheetMusic.setFilePath(filePath.toString());
+                    sheetMusic.setFileSize(file.getSize());
+                    sheetMusic.setContentType(contentType);
+                    
+                    // 이미지 파일인 경우 imageUrl도 설정
+                    if (isImage) {
+                        // 웹에서 접근 가능한 URL 생성
+                        String imageUrl = "/" + UPLOAD_DIR + "/" + savedFileName;
+                        sheetMusic.setImageUrl(imageUrl);
+                        log.info("이미지 URL 설정: {}", imageUrl);
+                    }
+                    
+                    log.info("파일 업로드 성공: {}", filePath.toString());
+                }
             } catch (Exception e) {
                 log.error("파일 업로드 실패", e);
                 throw new RuntimeException("파일 업로드에 실패했습니다: " + e.getMessage());
@@ -186,16 +208,31 @@ public class SheetMusicService {
         SheetMusic sheetMusic = sheetMusicRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("악보를 찾을 수 없습니다: " + id));
         
-        // 파일이 있다면 삭제
-        if (sheetMusic.getFilePath() != null && !sheetMusic.getFilePath().isEmpty()) {
-            try {
-                File file = new File(sheetMusic.getFilePath());
-                if (file.exists()) {
-                    file.delete();
-                    log.info("파일 삭제 완료: {}", sheetMusic.getFilePath());
+        // Railway 프로필이면 Cloudinary 이미지 삭제
+        if ("railway".equals(activeProfile)) {
+            if (sheetMusic.getImageUrl() != null && !sheetMusic.getImageUrl().isEmpty()) {
+                try {
+                    String publicId = cloudinaryService.extractPublicId(sheetMusic.getImageUrl());
+                    if (publicId != null) {
+                        cloudinaryService.deleteImage(publicId);
+                        log.info("Cloudinary 이미지 삭제 완료: {}", publicId);
+                    }
+                } catch (Exception e) {
+                    log.warn("Cloudinary 이미지 삭제 실패: {}", sheetMusic.getImageUrl(), e);
                 }
-            } catch (Exception e) {
-                log.warn("파일 삭제 실패: {}", sheetMusic.getFilePath(), e);
+            }
+        } else {
+            // 로컬 파일 삭제
+            if (sheetMusic.getFilePath() != null && !sheetMusic.getFilePath().isEmpty()) {
+                try {
+                    File file = new File(sheetMusic.getFilePath());
+                    if (file.exists()) {
+                        file.delete();
+                        log.info("파일 삭제 완료: {}", sheetMusic.getFilePath());
+                    }
+                } catch (Exception e) {
+                    log.warn("파일 삭제 실패: {}", sheetMusic.getFilePath(), e);
+                }
             }
         }
         
