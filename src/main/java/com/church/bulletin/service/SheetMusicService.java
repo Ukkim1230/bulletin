@@ -129,6 +129,15 @@ public class SheetMusicService {
                 sheetMusic.setFileSize(file.getSize());
                 sheetMusic.setContentType(file.getContentType());
                 
+                // 이미지 파일인 경우 imageUrl도 설정
+                String contentType = file.getContentType();
+                if (contentType != null && contentType.startsWith("image/")) {
+                    // 웹에서 접근 가능한 URL 생성
+                    String imageUrl = "/" + UPLOAD_DIR + "/" + savedFileName;
+                    sheetMusic.setImageUrl(imageUrl);
+                    log.info("이미지 URL 설정: {}", imageUrl);
+                }
+                
                 log.info("파일 업로드 성공: {}", filePath.toString());
             } catch (Exception e) {
                 log.error("파일 업로드 실패", e);
