@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class SheetMusicService {
@@ -31,6 +30,12 @@ public class SheetMusicService {
     
     @Value("${spring.profiles.active:default}")
     private String activeProfile;
+    
+    public SheetMusicService(SheetMusicRepository sheetMusicRepository, 
+                            CloudinaryService cloudinaryService) {
+        this.sheetMusicRepository = sheetMusicRepository;
+        this.cloudinaryService = cloudinaryService;
+    }
     
     // 업로드 디렉토리 경로
     private static final String UPLOAD_DIR = "uploads/sheet-music";
