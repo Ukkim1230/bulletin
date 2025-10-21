@@ -109,6 +109,8 @@ spring:
 
 server:
   port: ${PORT:8080}
+  servlet:
+    context-path: /
 
 # Railway 배포 환경에서 실제 도메인 사용
 app:
