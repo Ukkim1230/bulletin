@@ -1,0 +1,137 @@
+package com.church.bulletin.controller.api;
+
+import com.church.bulletin.entity.SmallGroup;
+import com.church.bulletin.service.SmallGroupService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/small-groups")
+@RequiredArgsConstructor
+@Slf4j
+public class SmallGroupApiController {
+    
+    private final SmallGroupService smallGroupService;
+    
+    /**
+     * 모든 순모임 조회
+     */
+    @GetMapping
+    public ResponseEntity<List<SmallGroup>> getAllSmallGroups() {
+        try {
+            List<SmallGroup> smallGroups = smallGroupService.getAllActiveSmallGroups();
+            log.info("순모임 조회 성공: {}개", smallGroups.size());
+            return ResponseEntity.ok(smallGroups);
+        } catch (Exception e) {
+            log.error("순모임 조회 실패", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * 순모임 상세 조회
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<SmallGroup> getSmallGroup(@PathVariable Long id) {
+        try {
+            SmallGroup smallGroup = smallGroupService.getSmallGroupById(id);
+            if (smallGroup == null) {
+                return ResponseEntity.notFound().build();
+            }
+            log.info("순모임 상세 조회 성공: {}", id);
+            return ResponseEntity.ok(smallGroup);
+        } catch (Exception e) {
+            log.error("순모임 상세 조회 실패: {}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * 순모임 생성
+     */
+    @PostMapping
+    public ResponseEntity<SmallGroup> createSmallGroup(@ModelAttribute SmallGroup smallGroup) {
+        try {
+            log.info("순모임 생성 요청: name={}, leader={}, category={}", 
+                    smallGroup.getName(), smallGroup.getLeader(), smallGroup.getCategory());
+            
+            SmallGroup savedSmallGroup = smallGroupService.createSmallGroup(smallGroup);
+            log.info("순모임 생성 성공: {}", savedSmallGroup.getId());
+            return ResponseEntity.ok(savedSmallGroup);
+        } catch (Exception e) {
+            log.error("순모임 생성 실패", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * 순모임 수정
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<SmallGroup> updateSmallGroup(@PathVariable Long id, @ModelAttribute SmallGroup smallGroup) {
+        try {
+            smallGroup.setId(id);
+            SmallGroup updatedSmallGroup = smallGroupService.updateSmallGroup(smallGroup);
+            if (updatedSmallGroup == null) {
+                return ResponseEntity.notFound().build();
+            }
+            log.info("순모임 수정 성공: {}", id);
+            return ResponseEntity.ok(updatedSmallGroup);
+        } catch (Exception e) {
+            log.error("순모임 수정 실패: {}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * 순모임 삭제
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteSmallGroup(@PathVariable Long id) {
+        try {
+            boolean deleted = smallGroupService.deleteSmallGroup(id);
+            if (!deleted) {
+                return ResponseEntity.notFound().build();
+            }
+            log.info("순모임 삭제 성공: {}", id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("순모임 삭제 실패: {}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * 카테고리별 순모임 조회
+     */
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<SmallGroup>> getSmallGroupsByCategory(@PathVariable String category) {
+        try {
+            List<SmallGroup> smallGroups = smallGroupService.getSmallGroupsByCategory(category);
+            log.info("카테고리별 순모임 조회 성공: {}개", smallGroups.size());
+            return ResponseEntity.ok(smallGroups);
+        } catch (Exception e) {
+            log.error("카테고리별 순모임 조회 실패: {}", category, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * 순모임 검색
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<SmallGroup>> searchSmallGroups(@RequestParam String keyword) {
+        try {
+            List<SmallGroup> smallGroups = smallGroupService.searchSmallGroups(keyword);
+            log.info("순모임 검색 성공: {}개", smallGroups.size());
+            return ResponseEntity.ok(smallGroups);
+        } catch (Exception e) {
+            log.error("순모임 검색 실패: {}", keyword, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+}

@@ -1,5 +1,6 @@
 package com.church.bulletin.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,7 @@ public class Announcement {
     private String content;
     
     @Column(name = "announcement_date", nullable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate announcementDate; // 광고 게시 날짜
     
     @Column(name = "start_date")

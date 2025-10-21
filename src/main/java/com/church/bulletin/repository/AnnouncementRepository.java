@@ -31,4 +31,8 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Long
     // 날짜 범위 내 공지사항 조회
     List<Announcement> findByAnnouncementDateBetweenAndIsActiveTrueOrderByAnnouncementDateDescDisplayOrderAsc(
             LocalDate startDate, LocalDate endDate);
+    
+    // 활성화된 공지사항 조회 (시작일/종료일 고려)
+    List<Announcement> findByIsActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByDisplayOrderAscCreatedAtDesc(
+            LocalDate startDate, LocalDate endDate);
 }

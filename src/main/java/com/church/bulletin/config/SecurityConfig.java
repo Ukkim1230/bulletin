@@ -8,10 +8,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final CorsConfigurationSource corsConfigurationSource;
+
+    public SecurityConfig(CorsConfigurationSource corsConfigurationSource) {
+        this.corsConfigurationSource = corsConfigurationSource;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -25,6 +32,7 @@ public class SecurityConfig {
                 // 모든 경로 허용 (로그인 기능 비활성화)
                 .anyRequest().permitAll()
             )
+            .cors(cors -> cors.configurationSource(corsConfigurationSource)) // CORS 설정 추가
             .csrf(csrf -> csrf.disable()) // CSRF 완전 비활성화 (개발용)
             .headers(headers -> headers
                 // H2 콘솔을 위해 frame options 비활성화
