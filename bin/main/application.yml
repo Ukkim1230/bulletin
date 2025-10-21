@@ -89,8 +89,8 @@ spring:
     activate:
       on-profile: railway
   datasource:
-    url: ${DATABASE_URL:jdbc:h2:file:./data/bulletin;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE}
-    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
@@ -100,7 +100,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: ${DATABASE_DIALECT:org.hibernate.dialect.H2Dialect}
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   thymeleaf:
     cache: true
   h2:
