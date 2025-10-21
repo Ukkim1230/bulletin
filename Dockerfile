@@ -24,4 +24,5 @@ RUN ./gradlew clean build -x test --no-daemon
 # JAR 파일 실행
 EXPOSE 8080
 ENV PORT=8080
-CMD ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Dspring.profiles.active=railway -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar"]
+ENV SPRING_PROFILES_ACTIVE=railway
+CMD ["sh", "-c", "echo 'Starting with PORT='$PORT && java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar"]
