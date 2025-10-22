@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -179,6 +178,32 @@ public class SmallGroupService {
         }
         if (!videoUrls.isEmpty()) {
             smallGroup.setVideos(String.join(",", videoUrls));
+        }
+    }
+    
+    /**
+     * 순모임 가입 신청
+     */
+    public boolean joinSmallGroup(Long smallGroupId, Object joinRequest) {
+        try {
+            SmallGroup smallGroup = getSmallGroupById(smallGroupId);
+            if (smallGroup == null) {
+                log.warn("순모임을 찾을 수 없습니다: {}", smallGroupId);
+                return false;
+            }
+            
+            // 가입 신청 로직 (현재는 로그만 출력)
+            log.info("순모임 가입 신청: {} - {}", smallGroup.getName(), joinRequest);
+            
+            // TODO: 실제 가입 신청 처리 로직 구현
+            // - 이메일 발송
+            // - 데이터베이스에 가입 신청 기록
+            // - 순장에게 알림
+            
+            return true;
+        } catch (Exception e) {
+            log.error("순모임 가입 신청 실패: {}", smallGroupId, e);
+            return false;
         }
     }
     

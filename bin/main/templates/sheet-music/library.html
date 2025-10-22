@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>악보 라이브러리 - 주사랑교회 청년부</title>
+    
+    <!-- PWA 메타 태그 -->
+    <meta name="description" content="주사랑교회 청년부를 위한 모바일 주보 앱">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- 매니페스트 -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 공통 스타일 -->
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+</head>
+<body>
+    <!-- 헤더 -->
+    <th:block th:replace="~{fragments/header :: header(${#temporals.createToday()})}"></th:block>
+
+    <div class="container-fluid px-3 py-3">
+        <!-- 악보 라이브러리 섹션 -->
+        <section id="sheet-music" class="mb-4">
+            <div class="mb-4">
+                <h2 class="h5 fw-bold mb-1" style="color: var(--foreground);">
+                    <i class="fas fa-music me-2"></i>악보 라이브러리
+                </h2>
+                <p style="font-size: 0.875rem; color: var(--muted-foreground);">청년부 찬양 악보를 확인하고 다운로드하세요</p>
+            </div>
+
+            <!-- 통계 카드 -->
+            <div class="row g-2 mb-4">
+                <div class="col-12">
+                    <div class="card text-center" style="background: var(--primary); color: var(--primary-foreground); border: none;">
+                        <div class="card-body p-3">
+                            <h6 class="mb-1">전체 악보</h6>
+                            <h2 class="mb-0 fw-bold" th:text="${totalCount}">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 검색 & 필터 -->
+            <div class="card mb-4" style="border: 1px solid var(--border); background: var(--card);">
+                <div class="card-body p-3">
+                    <form method="get" class="row g-2">
+                        <div class="col-12">
+                            <div class="input-group">
+                                <span class="input-group-text" style="background: var(--muted); border-color: var(--border);">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" name="search" class="form-control" 
+                                       th:value="${searchTerm}" 
+                                       placeholder="제목 또는 아티스트로 검색"
+                                       style="border-color: var(--border);">
+                                <button type="submit" class="btn" style="background: var(--primary); color: var(--primary-foreground);">
+                                    검색
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 악보 추가 버튼 -->
+            <div class="mb-3">
+                <a href="/sheet-music/add" class="btn w-100" style="background: var(--primary); color: var(--primary-foreground);">
+                    <i class="fas fa-plus me-2"></i>새 악보 추가
+                </a>
+            </div>
+
+            <!-- 악보 목록 -->
+            <div th:if="${sheetMusicPage != null and !sheetMusicPage.empty}">
+                <div class="row g-3">
+                    <div th:each="music : ${sheetMusicPage.content}" class="col-12">
+                        <div class="section-card">
+                            <div class="card-body p-3">
+                                <div class="d-flex gap-3">
+                                    <!-- 악보 썸네일 -->
+                                    <div class="flex-shrink-0">
+                                        <div th:if="${music.imageUrl}" 
+                                             style="width: 80px; height: 80px; border-radius: var(--radius); overflow: hidden; background: var(--muted);">
+                                            <img th:src="${music.imageUrl}" 
+                                                 th:alt="${music.title}"
+                                                 style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                        <div th:unless="${music.imageUrl}" 
+                                             class="d-flex align-items-center justify-content-center"
+                                             style="width: 80px; height: 80px; border-radius: var(--radius); background: var(--muted);">
+                                            <i class="fas fa-music fa-2x" style="color: var(--muted-foreground);"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 악보 정보 -->
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 fw-bold" th:text="${music.title}">악보 제목</h6>
+                                        <p class="mb-2 small text-muted" th:if="${music.composer}">
+                                            <i class="fas fa-user me-1"></i><span th:text="${music.composer}">아티스트</span>
+                                        </p>
+                                        <div class="d-flex gap-2">
+                                            <span class="badge" 
+                                                  th:style="${music.difficulty.name() == 'EASY'} ? 'background: #22c55e; color: white;' : 
+                                                           (${music.difficulty.name() == 'MEDIUM'} ? 'background: #f59e0b; color: white;' : 'background: #ef4444; color: white;')"
+                                                  th:text="${music.difficulty.displayName}">난이도</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 액션 버튼 -->
+                                    <div class="d-flex flex-column gap-2 align-items-end">
+                                        <a th:href="@{'/sheet-music/' + ${music.id}}" 
+                                           class="btn btn-sm" 
+                                           style="background: var(--secondary); border: 1px solid var(--border);">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm" 
+                                                th:classappend="${music.isFavorite} ? 'btn-warning' : 'btn-outline-secondary'"
+                                                th:onclick="'toggleFavorite(' + ${music.id} + ')'">
+                                            <i th:class="${music.isFavorite} ? 'fas fa-star' : 'far fa-star'"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 빈 상태 -->
+            <div th:if="${sheetMusicPage == null or sheetMusicPage.empty}" class="text-center py-5">
+                <div class="card" style="border: 2px dashed var(--border); background: var(--muted);">
+                    <div class="card-body py-5">
+                        <i class="fas fa-music fa-3x mb-3" style="color: var(--muted-foreground);"></i>
+                        <h5 class="fw-bold mb-2" style="color: var(--foreground);">악보가 없습니다</h5>
+                        <p class="text-muted mb-3">새로운 악보를 추가해보세요.</p>
+                        <a href="/sheet-music/add" class="btn" style="background: var(--primary); color: var(--primary-foreground);">
+                            <i class="fas fa-plus me-2"></i>악보 추가
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- 하단 네비게이션 -->
+    <th:block th:replace="~{fragments/bottom-nav :: bottom-nav}"></th:block>
+    
+    <!-- 새로고침 버튼 -->
+    <th:block th:replace="~{fragments/bottom-nav :: refresh-btn}"></th:block>
+    
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <th:block th:replace="~{fragments/bottom-nav :: navigation-scripts}"></th:block>
+    
+    <script>
+        // 페이지 로드 시 악보 탭 활성화
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveTab('music');
+        });
+        
+        // 즐겨찾기 토글
+        function toggleFavorite(id) {
+            fetch('/api/sheet-music/' + id + '/favorite', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('즐겨찾기 설정에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            });
+        }
+    </script>
+</body>
+</html>

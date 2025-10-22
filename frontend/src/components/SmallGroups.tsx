@@ -71,7 +71,7 @@ export function SmallGroups() {
           leader: formData.leader,
           memberCount: formData.memberCount,
           location: formData.location,
-          meetingTime: formData.time,
+          time: formData.time,
           description: formData.description,
           category: formData.category,
           images: formData.images
@@ -100,41 +100,77 @@ export function SmallGroups() {
     }
   }
 
-  const handleEdit = () => {
-    if (!editingGroup) return
-    setGroups(
-      groups.map((group) =>
-        group.id === editingGroup.id
-          ? {
-              ...group,
-              name: formData.name,
-              leader: formData.leader,
-              memberCount: formData.memberCount,
-              location: formData.location,
-              time: formData.time,
-              description: formData.description,
-              category: formData.category,
-              images: formData.images
-                .split(",")
-                .map((url) => url.trim())
-                .filter(Boolean),
-              videos: formData.videos
-                .split(",")
-                .map((url) => url.trim())
-                .filter(Boolean),
-            }
-          : group,
-      ),
-    )
-    setIsEditOpen(false)
-    setEditingGroup(null)
-    resetForm()
+  const handleEdit = async () => {
+    if (!editingGroup) return;
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/small-groups/${editingGroup.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            leader: formData.leader,
+            memberCount: formData.memberCount,
+            location: formData.location,
+            time: formData.time,
+            description: formData.description,
+            category: formData.category,
+            images: formData.images
+              .split(",")
+              .map((url) => url.trim())
+              .filter(Boolean),
+            videos: formData.videos
+              .split(",")
+              .map((url) => url.trim())
+              .filter(Boolean),
+          }),
+        },
+      );
+
+      if (response.ok) {
+        const updatedGroup = await response.json();
+        setGroups(
+          groups.map((group) =>
+            group.id === editingGroup.id ? updatedGroup : group,
+          ),
+        );
+        setIsEditOpen(false);
+        setEditingGroup(null);
+        resetForm();
+      } else {
+        console.error("Failed to edit small group");
+      }
+    } catch (error) {
+      console.error("Error editing small group:", error);
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("이 순모임을 삭제하시겠습니까?")) {
-      setGroups(groups.filter((group) => group.id !== id))
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/small-groups/${id}`,
+          {
+            method: "DELETE",
+          },
+        );
+
+        if (response.ok) {
+          setGroups(groups.filter((group) => group.id !== id));
+        } else {
+          console.error("Failed to delete small group");
+        }
+      } catch (error) {
+        console.error("Error deleting small group:", error);
+      }
     }
+  }
+
+  const handleJoin = (id: string) => {
+    window.alert("가입 신청 기능은 현재 준비중입니다.");
   }
 
   const openEditDialog = (group: SmallGroup) => {
@@ -215,7 +251,7 @@ export function SmallGroups() {
                   id="memberCount"
                   type="number"
                   value={formData.memberCount}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, memberCount: Number.parseInt(e.target.value) || 0 })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, memberCount: parseInt(e.target.value) || 0 })}
                   placeholder="0"
                 />
               </div>
@@ -426,7 +462,11 @@ export function SmallGroups() {
                   </div>
                 )}
 
-                <Button className="w-full" size="lg">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => handleJoin(selectedGroup.id)}
+                >
                   가입 신청하기
                 </Button>
               </div>

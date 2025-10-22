@@ -532,11 +532,47 @@
         </div>
 
         <!-- 순모임 탭 컨텐츠 -->
-        <div id="smallGroupsTab" class="tab-content" style="display: none;">
-            <div class="text-center py-5">
-                <h3>순모임</h3>
-                <p>순모임을 확인하세요</p>
-                <a href="/small-groups" class="btn btn-primary">순모임 보러가기</a>
+        <div id="smallGroupsTab" class="tab-content" style="display: none; min-height: calc(100vh - 120px); padding-bottom: 80px;">
+            <!-- 순모임 안내 -->
+            <div class="alert alert-info mb-4" style="background: var(--accent); background-opacity: 0.3; border: 1px solid var(--border); border-opacity: 0.5;">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-2" 
+                         style="width: 2.5rem; height: 2.5rem; background: var(--primary); background-opacity: 0.1;">
+                        <i class="fas fa-info-circle" style="color: var(--primary); font-size: 1.25rem;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="fw-semibold mb-2" style="color: var(--foreground);">순모임이란?</h5>
+                        <p class="mb-0" style="color: var(--muted-foreground); line-height: 1.5;">
+                            청년들이 함께 모여 말씀을 나누고 교제하는 소그룹 모임입니다. 
+                            매주 정기적으로 만나 서로를 격려하고 신앙을 성장시켜 나갑니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 순모임 헤더 -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <button onclick="switchTab('home')" class="btn btn-outline-secondary d-flex align-items-center gap-2" style="border: 1px solid var(--border); background: transparent; color: var(--foreground);">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>돌아가기</span>
+                </button>
+                <h3 class="mb-0" style="color: var(--foreground);">순모임</h3>
+                <button onclick="openAddSmallGroupDialog()" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+                    <i class="fas fa-plus"></i>
+                    <span>추가</span>
+                </button>
+            </div>
+
+            <!-- 순모임 목록 -->
+            <div id="smallGroupsList" class="d-flex flex-column gap-3">
+                <!-- 순모임 목록이 여기에 동적으로 로드됩니다 -->
+            </div>
+
+            <!-- 순모임이 없는 경우 -->
+            <div id="noSmallGroups" class="text-center py-5" style="display: none;">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">아직 등록된 순모임이 없습니다</h5>
+                <p class="text-muted">첫 번째 순모임을 등록해보세요!</p>
             </div>
         </div>
 
@@ -1136,6 +1172,26 @@
             width: 0%;
             transition: width 0.3s;
         }
+        
+        /* 순모임 탭 스타일 */
+        #smallGroupsTab {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 헤더와 네비게이션바가 항상 보이도록 */
+        .header {
+            position: relative;
+            z-index: 10;
+        }
+        
+        .bottom-nav {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 1000 !important;
+        }
     </style>
 
     <script>
@@ -1621,23 +1677,6 @@
     
     <!-- 탭 전환 및 아코디언 기능 스크립트 -->
     <script>
-        // 탭 전환 기능
-        function switchTab(tabName) {
-            // 모든 탭 컨텐츠 숨기기
-            const allTabs = document.querySelectorAll('.tab-content');
-            allTabs.forEach(tab => {
-                tab.style.display = 'none';
-            });
-            
-            // 선택된 탭만 보이기
-            const activeTab = document.getElementById(tabName + 'Tab');
-            if (activeTab) {
-                activeTab.style.display = 'block';
-            }
-            
-            // 네비게이션 활성화 상태 업데이트
-            updateNavigationState(tabName);
-        }
         
         // 네비게이션 상태 업데이트
         function updateNavigationState(activeTab) {
@@ -1855,6 +1894,326 @@
                     alert('소식 삭제에 실패했습니다.');
                 }
             }
+        }
+        
+        // 순모임 문의하기 기능
+        function contactSmallGroup() {
+            const phoneNumber = '010-5240-7719';
+            const message = '순모임 참여 문의드립니다.';
+            
+            // 전화 걸기 옵션
+            const callOption = confirm('전화로 문의하시겠습니까?');
+            if (callOption) {
+                window.location.href = `tel:${phoneNumber}`;
+                return;
+            }
+            
+            // 카카오톡 공유 옵션 (모바일에서만 작동)
+            if (navigator.share) {
+                navigator.share({
+                    title: '순모임 참여 문의',
+                    text: message,
+                    url: window.location.href
+                }).catch(() => {
+                    // 공유 실패 시 클립보드 복사
+                    copyToClipboard(`${message}\n연락처: ${phoneNumber}`);
+                });
+            } else {
+                // 공유 API가 없는 경우 클립보드 복사
+                copyToClipboard(`${message}\n연락처: ${phoneNumber}`);
+            }
+        }
+        
+        // 순모임 관련 전역 변수
+        let smallGroups = [];
+        let currentEditingSmallGroupId = null;
+        
+        // 순모임 목록 로드
+        async function loadSmallGroups() {
+            try {
+                const response = await fetch('/api/small-groups');
+                if (!response.ok) {
+                    throw new Error('순모임 목록을 불러올 수 없습니다.');
+                }
+                
+                smallGroups = await response.json();
+                renderSmallGroups();
+            } catch (error) {
+                console.error('순모임 목록 로드 실패:', error);
+                showNoSmallGroups();
+            }
+        }
+        
+        // 순모임 목록 렌더링
+        function renderSmallGroups() {
+            const container = document.getElementById('smallGroupsList');
+            const noGroupsDiv = document.getElementById('noSmallGroups');
+            
+            if (smallGroups.length === 0) {
+                container.innerHTML = '';
+                noGroupsDiv.style.display = 'block';
+                return;
+            }
+            
+            noGroupsDiv.style.display = 'none';
+            container.innerHTML = smallGroups.map(group => `
+                <div class="card" style="border: 1px solid var(--border); border-opacity: 0.5;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="fw-semibold mb-1" style="color: var(--foreground);">${group.name}</h5>
+                                <span class="badge px-2 py-1" style="font-size: 0.75rem; background: var(--secondary); color: var(--secondary-foreground);">${group.category || '일반'}</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button onclick="openEditSmallGroupDialog(${group.id})" 
+                                        class="btn btn-sm btn-outline-secondary" 
+                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-edit" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <button onclick="deleteSmallGroup(${group.id})" 
+                                        class="btn btn-sm btn-outline-danger" 
+                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-user text-muted"></i>
+                            <span class="text-muted small">순장:</span>
+                            <span class="fw-medium">${group.leader}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-users text-muted"></i>
+                            <span class="text-muted small">순원:</span>
+                            <span class="fw-medium">${group.memberCount}명</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-map-marker-alt text-muted"></i>
+                            <span class="text-muted small">장소:</span>
+                            <span class="fw-medium">${group.location}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <i class="fas fa-clock text-muted"></i>
+                            <span class="text-muted small">시간:</span>
+                            <span class="fw-medium">${group.meetingTime}</span>
+                        </div>
+                        
+                        ${group.description ? `<p class="text-muted small mb-3" style="line-height: 1.5;">${group.description}</p>` : ''}
+                        
+                        <button onclick="viewSmallGroup(${group.id})" class="btn btn-primary w-100">
+                            가입하기
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 순모임이 없는 경우 표시
+        function showNoSmallGroups() {
+            const container = document.getElementById('smallGroupsList');
+            const noGroupsDiv = document.getElementById('noSmallGroups');
+            
+            container.innerHTML = '';
+            noGroupsDiv.style.display = 'block';
+        }
+        
+        // 순모임 추가 다이얼로그 열기
+        function openAddSmallGroupDialog() {
+            currentEditingSmallGroupId = null;
+            showSmallGroupDialog('순모임 추가', '추가');
+            clearSmallGroupForm();
+        }
+        
+        // 순모임 편집 다이얼로그 열기
+        async function openEditSmallGroupDialog(id) {
+            try {
+                const response = await fetch(`/api/small-groups/${id}`);
+                if (!response.ok) {
+                    throw new Error('순모임을 불러올 수 없습니다.');
+                }
+                
+                const smallGroup = await response.json();
+                currentEditingSmallGroupId = id;
+                showSmallGroupDialog('순모임 수정', '수정');
+                fillSmallGroupForm(smallGroup);
+            } catch (error) {
+                console.error('순모임 조회 실패:', error);
+                alert('순모임을 불러오는데 실패했습니다.');
+            }
+        }
+        
+        // 순모임 다이얼로그 표시
+        function showSmallGroupDialog(title, buttonText) {
+            // 간단한 모달 대신 prompt 사용 (실제 구현에서는 모달을 만들어야 함)
+            const name = prompt('순모임 이름:', '');
+            if (!name) return;
+            
+            const leader = prompt('순장 이름:', '');
+            if (!leader) return;
+            
+            const memberCount = parseInt(prompt('순원 수:', '0')) || 0;
+            const location = prompt('모이는 장소:', '');
+            if (!location) return;
+            
+            const meetingTime = prompt('모이는 시간:', '');
+            if (!meetingTime) return;
+            
+            const category = prompt('카테고리:', '');
+            const description = prompt('세부내용:', '');
+            
+            const smallGroupData = {
+                name: name,
+                leader: leader,
+                memberCount: memberCount,
+                location: location,
+                meetingTime: meetingTime,
+                category: category,
+                description: description,
+                isActive: true
+            };
+            
+            saveSmallGroup(smallGroupData);
+        }
+        
+        // 순모임 폼 초기화
+        function clearSmallGroupForm() {
+            // 폼 초기화 로직
+        }
+        
+        // 순모임 폼 채우기
+        function fillSmallGroupForm(smallGroup) {
+            // 폼 채우기 로직
+        }
+        
+        // 순모임 저장
+        async function saveSmallGroup(smallGroupData) {
+            try {
+                let response;
+                if (currentEditingSmallGroupId) {
+                    // 수정
+                    response = await fetch(`/api/small-groups/${currentEditingSmallGroupId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(smallGroupData)
+                    });
+                } else {
+                    // 추가
+                    response = await fetch('/api/small-groups', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(smallGroupData)
+                    });
+                }
+                
+                if (!response.ok) {
+                    throw new Error('저장에 실패했습니다.');
+                }
+                
+                alert(currentEditingSmallGroupId ? '순모임이 수정되었습니다!' : '순모임이 추가되었습니다!');
+                await loadSmallGroups();
+                
+            } catch (error) {
+                console.error('순모임 저장 실패:', error);
+                alert('순모임 저장에 실패했습니다.');
+            }
+        }
+        
+        // 순모임 삭제
+        async function deleteSmallGroup(id) {
+            if (confirm('이 순모임을 삭제하시겠습니까?')) {
+                try {
+                    const response = await fetch(`/api/small-groups/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('삭제에 실패했습니다.');
+                    }
+                    
+                    alert('순모임이 삭제되었습니다!');
+                    await loadSmallGroups();
+                    
+                } catch (error) {
+                    console.error('순모임 삭제 실패:', error);
+                    alert('순모임 삭제에 실패했습니다.');
+                }
+            }
+        }
+        
+        // 순모임 상세보기
+        async function viewSmallGroup(id) {
+            try {
+                const response = await fetch(`/api/small-groups/${id}`);
+                if (!response.ok) {
+                    throw new Error('순모임을 불러올 수 없습니다.');
+                }
+                
+                const smallGroup = await response.json();
+                
+                // 가입 신청
+                const name = prompt('이름을 입력하세요:');
+                if (!name) return;
+                
+                const phone = prompt('연락처를 입력하세요:');
+                if (!phone) return;
+                
+                const email = prompt('이메일을 입력하세요 (선택사항):') || '';
+                const message = prompt('가입 동기를 간단히 입력하세요 (선택사항):') || '';
+                
+                const joinRequest = {
+                    name: name,
+                    phone: phone,
+                    email: email,
+                    message: message
+                };
+                
+                const joinResponse = await fetch(`/api/small-groups/${id}/join`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(joinRequest)
+                });
+                
+                if (joinResponse.ok) {
+                    alert('가입 신청이 완료되었습니다! 순장이 연락드릴 예정입니다.');
+                } else {
+                    const errorText = await joinResponse.text();
+                    alert('가입 신청에 실패했습니다: ' + errorText);
+                }
+                
+            } catch (error) {
+                console.error('순모임 조회 실패:', error);
+                alert('순모임을 불러오는데 실패했습니다.');
+            }
+        }
+        
+        // 탭 전환 시 순모임 목록 로드
+        function switchTab(tabName) {
+            // 모든 탭 컨텐츠 숨기기
+            const allTabs = document.querySelectorAll('.tab-content');
+            allTabs.forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // 선택된 탭만 보이기
+            const activeTab = document.getElementById(tabName + 'Tab');
+            if (activeTab) {
+                activeTab.style.display = 'block';
+                
+                // 순모임 탭이 선택된 경우 목록 로드
+                if (tabName === 'smallGroups') {
+                    loadSmallGroups();
+                }
+            }
+            
+            // 네비게이션 활성화 상태 업데이트
+            updateNavigationState(tabName);
         }
     </script>
     

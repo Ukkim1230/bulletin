@@ -6,19 +6,32 @@
     <title>순모임 - 교회 주보</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- 공통 스타일 -->
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
     <style>
+        /* 메인페이지와 동일한 흑백 디자인 */
         :root {
-            --background: #ffffff;
-            --foreground: #0f172a;
-            --muted: #f1f5f9;
-            --muted-foreground: #64748b;
-            --border: #e2e8f0;
-            --primary: #3b82f6;
-            --primary-foreground: #ffffff;
-            --secondary: #f1f5f9;
-            --secondary-foreground: #0f172a;
-            --destructive: #ef4444;
-            --destructive-foreground: #ffffff;
+            --background: oklch(1 0 0);
+            --foreground: oklch(0.145 0 0);
+            --card: oklch(1 0 0);
+            --card-foreground: oklch(0.145 0 0);
+            --popover: oklch(1 0 0);
+            --popover-foreground: oklch(0.145 0 0);
+            --primary: oklch(0.205 0 0);
+            --primary-foreground: oklch(0.985 0 0);
+            --secondary: oklch(0.97 0 0);
+            --secondary-foreground: oklch(0.205 0 0);
+            --muted: oklch(0.97 0 0);
+            --muted-foreground: oklch(0.556 0 0);
+            --accent: oklch(0.97 0 0);
+            --accent-foreground: oklch(0.205 0 0);
+            --destructive: oklch(0.577 0.245 27.325);
+            --destructive-foreground: oklch(0.577 0.245 27.325);
+            --border: oklch(0.922 0 0);
+            --input: oklch(0.922 0 0);
+            --ring: oklch(0.708 0 0);
+            --radius: 0.625rem;
         }
 
         body {
@@ -63,34 +76,34 @@
         }
 
         .btn-primary {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: #ffffff;
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--primary-foreground);
             font-weight: 600;
             padding: 0.75rem 1.5rem;
-            border-radius: 6px;
+            border-radius: var(--radius);
             transition: all 0.2s ease;
         }
 
         .btn-primary:hover {
-            background: #2563eb;
-            border-color: #2563eb;
+            background: var(--foreground);
+            border-color: var(--foreground);
             transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: #6b7280;
-            border-color: #6b7280;
-            color: #ffffff;
+            background: var(--secondary);
+            border-color: var(--border);
+            color: var(--secondary-foreground);
             font-weight: 600;
             padding: 0.75rem 1.5rem;
-            border-radius: 6px;
+            border-radius: var(--radius);
             transition: all 0.2s ease;
         }
 
         .btn-secondary:hover {
-            background: #4b5563;
-            border-color: #4b5563;
+            background: var(--muted);
+            border-color: var(--foreground);
             transform: translateY(-1px);
         }
 
@@ -106,29 +119,30 @@
         }
 
         .form-control {
-            border-radius: 6px;
-            border: 1px solid #d1d5db;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
             padding: 0.75rem;
             font-size: 0.875rem;
-            background: #f9fafb;
+            background: var(--background);
+            color: var(--foreground);
             transition: all 0.2s ease;
         }
 
         .form-control:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.1);
-            background: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1);
+            background: var(--background);
         }
 
         .form-label {
             font-weight: 600;
             margin-bottom: 0.5rem;
-            color: #374151;
+            color: var(--foreground);
             font-size: 0.875rem;
         }
 
         .form-control::placeholder {
-            color: #9ca3af;
+            color: var(--muted-foreground);
         }
 
         .form-text {
@@ -170,14 +184,14 @@
 
         .modal-header {
             padding: 1.5rem 2rem 1rem 2rem;
-            border-bottom: 1px solid #e5e7eb;
-            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            background: var(--background);
         }
 
         .modal-title {
             font-size: 1.25rem;
             font-weight: 700;
-            color: #111827;
+            color: var(--foreground);
             margin: 0;
         }
 
@@ -185,7 +199,7 @@
             background: none;
             border: none;
             font-size: 1.5rem;
-            color: #6b7280;
+            color: var(--muted-foreground);
             cursor: pointer;
             padding: 0;
             width: 24px;
@@ -196,18 +210,53 @@
         }
 
         .btn-close:hover {
-            color: #374151;
+            color: var(--foreground);
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .modal-footer {
             padding: 1rem 2rem 2rem 2rem;
             border-top: 1px solid var(--border);
         }
+
+        /* 하단 네비게이션 고정 스타일 */
+        .bottom-nav {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: var(--card) !important;
+            border-top: 1px solid var(--border) !important;
+            z-index: 1000 !important;
+        }
+
+        /* body에 하단 패딩 추가하여 네비게이션바와 겹치지 않도록 */
+        body {
+            padding-bottom: 80px !important;
+        }
+
+        /* 취소 버튼 hover 시 색상 변화만 제거 */
+        .btn-secondary:hover {
+            background: var(--secondary) !important;
+            border-color: var(--border) !important;
+            color: var(--secondary-foreground) !important;
+        }
     </style>
 </head>
 <body>
+    <!-- 헤더 -->
+    <th:block th:replace="~{fragments/header :: header(${#temporals.createToday()})}"></th:block>
+
     <div class="container py-4">
-        <!-- 헤더 -->
+        <!-- 순모임 헤더 -->
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
                 <h1 class="h3 fw-bold mb-1">순모임</h1>
@@ -229,14 +278,12 @@
                                 <span class="badge" th:text="${group.category}">운동</span>
                             </div>
                             <div class="d-flex gap-1">
-                                <button onclick="openEditSmallGroupDialog([[${group.id}]])" 
-                                        class="btn btn-sm btn-outline-secondary" 
-                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <button th:onclick="'openEditSmallGroupDialog(' + ${group.id} + ')'" 
+                                        class="btn btn-sm btn-outline-secondary icon-btn">
                                     <i class="fas fa-edit" style="font-size: 0.75rem;"></i>
                                 </button>
-                                <button onclick="deleteSmallGroup([[${group.id}]])" 
-                                        class="btn btn-sm btn-outline-danger" 
-                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                                <button th:onclick="'deleteSmallGroup(' + ${group.id} + ')'" 
+                                        class="btn btn-sm btn-outline-danger icon-btn">
                                     <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
                                 </button>
                             </div>
@@ -264,7 +311,7 @@
                             <span class="fw-medium" th:text="${group.meetingTime}">매주 토요일 오전 7시</span>
                         </div>
                         <p class="text-muted small mb-4" style="line-height: 1.5;" th:text="${group.description}">함께 달리며 건강한 신앙생활을 추구합니다. 초보자도 환영합니다!</p>
-                        <button onclick="viewSmallGroup([[${group.id}]])" class="btn btn-primary w-100">
+                        <button th:onclick="'viewSmallGroup(' + ${group.id} + ')'" class="btn btn-primary w-100">
                             가입하기
                         </button>
                     </div>
@@ -353,29 +400,29 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="smallGroupName" class="form-label">순모임 이름</label>
-                                <input type="text" id="smallGroupName" class="form-control" placeholder="예: 런닝순">
+                                <input type="text" id="smallGroupName" class="form-control">
                             </div>
                             <div class="mb-3">
                                 <label for="smallGroupLeader" class="form-label">순장</label>
-                                <input type="text" id="smallGroupLeader" class="form-control" placeholder="순장 이름">
+                                <input type="text" id="smallGroupLeader" class="form-control">
                             </div>
                             <div class="mb-3">
                                 <label for="smallGroupMemberCount" class="form-label">순원 수</label>
-                                <input type="number" id="smallGroupMemberCount" class="form-control" placeholder="0">
+                                <input type="number" id="smallGroupMemberCount" class="form-control">
                             </div>
                             <div class="mb-3">
                                 <label for="smallGroupLocation" class="form-label">모이는 장소</label>
-                                <input type="text" id="smallGroupLocation" class="form-control" placeholder="예: 한강공원">
+                                <input type="text" id="smallGroupLocation" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="smallGroupTime" class="form-label">모이는 시간</label>
-                                <input type="text" id="smallGroupTime" class="form-control" placeholder="예: 매주 토요일 오전 7시">
+                                <input type="text" id="smallGroupTime" class="form-control">
                             </div>
                             <div class="mb-3">
                                 <label for="smallGroupCategory" class="form-label">카테고리</label>
-                                <input type="text" id="smallGroupCategory" class="form-control" placeholder="예: 운동, 취미, 신앙">
+                                <input type="text" id="smallGroupCategory" class="form-control">
                             </div>
                             <div class="mb-3">
                                 <label for="smallGroupImages" class="form-label">홍보 이미지</label>
@@ -391,7 +438,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="smallGroupDescription" class="form-label">세부내용</label>
-                        <textarea id="smallGroupDescription" class="form-control" rows="3" placeholder="순모임에 대한 설명을 입력하세요"></textarea>
+                        <textarea id="smallGroupDescription" class="form-control" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -409,6 +456,9 @@
         // 순모임 상세보기
         async function viewSmallGroup(id) {
             try {
+                // 현재 보고 있는 순모임 ID 저장
+                window.currentViewingSmallGroupId = id;
+                
                 const response = await fetch(`/api/small-groups/${id}`);
                 if (!response.ok) {
                     throw new Error('순모임을 불러올 수 없습니다.');
@@ -514,8 +564,8 @@
                 document.getElementById('smallGroupTime').value = smallGroup.meetingTime;
                 document.getElementById('smallGroupCategory').value = smallGroup.category || '';
                 document.getElementById('smallGroupDescription').value = smallGroup.description || '';
-                document.getElementById('smallGroupImages').value = smallGroup.images || '';
-                document.getElementById('smallGroupVideos').value = smallGroup.videos || '';
+
+
                 
                 document.getElementById('smallGroupDialog').style.display = 'flex';
                 
@@ -561,14 +611,14 @@
             const name = document.getElementById('smallGroupName').value;
             const leader = document.getElementById('smallGroupLeader').value;
             const memberCount = parseInt(document.getElementById('smallGroupMemberCount').value) || 0;
-            const location = document.getElementById('smallGroupLocation').value;
+            const meetingLocation = document.getElementById('smallGroupLocation').value;
             const time = document.getElementById('smallGroupTime').value;
             const category = document.getElementById('smallGroupCategory').value;
             const description = document.getElementById('smallGroupDescription').value;
             const imageFiles = document.getElementById('smallGroupImages').files;
             const videoFiles = document.getElementById('smallGroupVideos').files;
             
-            if (!name || !leader || !location || !time) {
+            if (!name || !leader || !meetingLocation || !time) {
                 alert('필수 항목을 입력해주세요.');
                 return;
             }
@@ -578,7 +628,7 @@
                 formData.append('name', name);
                 formData.append('leader', leader);
                 formData.append('memberCount', memberCount);
-                formData.append('location', location);
+                formData.append('location', meetingLocation);
                 formData.append('meetingTime', time);
                 formData.append('category', category);
                 formData.append('description', description);
@@ -597,16 +647,66 @@
                 let response;
                 if (currentEditingSmallGroupId) {
                     // 수정
-                    response = await fetch(`/api/small-groups/${currentEditingSmallGroupId}`, {
-                        method: 'PUT',
-                        body: formData
-                    });
+                    const hasFiles = imageFiles.length > 0 || videoFiles.length > 0;
+                    const endpoint = hasFiles ? 
+                        `/api/small-groups/${currentEditingSmallGroupId}/with-files` : 
+                        `/api/small-groups/${currentEditingSmallGroupId}`;
+                    
+                    if (hasFiles) {
+                        response = await fetch(endpoint, {
+                            method: 'PUT',
+                            body: formData
+                        });
+                    } else {
+                        // JSON으로 전송
+                        const jsonData = {
+                            name: name,
+                            leader: leader,
+                            memberCount: memberCount,
+                            location: meetingLocation,
+                            meetingTime: time,
+                            category: category,
+                            description: description,
+                            isActive: true
+                        };
+                        response = await fetch(endpoint, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(jsonData)
+                        });
+                    }
                 } else {
                     // 추가
-                    response = await fetch('/api/small-groups', {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const hasFiles = imageFiles.length > 0 || videoFiles.length > 0;
+                    const endpoint = hasFiles ? '/api/small-groups/with-files' : '/api/small-groups';
+                    
+                    if (hasFiles) {
+                        response = await fetch(endpoint, {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } else {
+                        // JSON으로 전송
+                        const jsonData = {
+                            name: name,
+                            leader: leader,
+                            memberCount: memberCount,
+                            location: meetingLocation,
+                            meetingTime: time,
+                            category: category,
+                            description: description,
+                            isActive: true
+                        };
+                        response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(jsonData)
+                        });
+                    }
                 }
                 
                 if (!response.ok) {
@@ -618,7 +718,7 @@
                 
                 // 페이지 새로고침
                 setTimeout(() => {
-                    location.reload();
+                    window.location.reload();
                 }, 1000);
                 
             } catch (error) {
@@ -642,7 +742,7 @@
                     
                     // 페이지 새로고침
                     setTimeout(() => {
-                        location.reload();
+                        window.location.reload();
                     }, 1000);
                     
                 } catch (error) {
@@ -652,9 +752,60 @@
             }
         }
 
-        function joinSmallGroup() {
-            alert('가입 신청 기능은 추후 구현 예정입니다.');
+        async function joinSmallGroup() {
+            // 가입 신청 모달 표시
+            const name = prompt('이름을 입력하세요:');
+            if (!name) return;
+            
+            const phone = prompt('연락처를 입력하세요:');
+            if (!phone) return;
+            
+            const email = prompt('이메일을 입력하세요 (선택사항):') || '';
+            const message = prompt('가입 동기를 간단히 입력하세요 (선택사항):') || '';
+            
+            try {
+                const joinRequest = {
+                    name: name,
+                    phone: phone,
+                    email: email,
+                    message: message
+                };
+                
+                // 현재 보고 있는 순모임의 ID를 가져오기 (전역 변수로 저장해야 함)
+                const smallGroupId = window.currentViewingSmallGroupId;
+                if (!smallGroupId) {
+                    alert('순모임 정보를 찾을 수 없습니다.');
+                    return;
+                }
+                
+                const response = await fetch(`/api/small-groups/${smallGroupId}/join`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(joinRequest)
+                });
+                
+                if (response.ok) {
+                    alert('가입 신청이 완료되었습니다! 순장이 연락드릴 예정입니다.');
+                    closeSmallGroupViewDialog();
+                } else {
+                    const errorText = await response.text();
+                    alert('가입 신청에 실패했습니다: ' + errorText);
+                }
+                
+            } catch (error) {
+                console.error('가입 신청 실패:', error);
+                alert('가입 신청 중 오류가 발생했습니다.');
+            }
         }
     </script>
+    
+    <!-- 하단 네비게이션 및 새로고침 버튼 -->
+    <th:block th:replace="~{fragments/bottom-nav :: bottom-nav}"></th:block>
+    <th:block th:replace="~{fragments/bottom-nav :: refresh-btn}"></th:block>
+    
+    <!-- 네비게이션 스크립트 -->
+    <th:block th:replace="~{fragments/bottom-nav :: navigation-scripts}"></th:block>
 </body>
 </html>
