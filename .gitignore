@@ -106,7 +106,50 @@ temp/
 # Application specific
 application-local.yml
 application-dev.yml
+application-prod.yml
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
 
 # Build artifacts
 bin/
 frontend/
+target/
+build/
+
+# IDE settings
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Upload directories (실제 업로드된 파일들)
+uploads/
+
+# Security sensitive files
+*.pem
+*.key
+*.crt
+*.p12

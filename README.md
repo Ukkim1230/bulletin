@@ -18,6 +18,16 @@ Spring Boot와 Thymeleaf를 사용한 교회 모바일 주보 관리 시스템�
 - **기도제목**: 카테고리별 기도제목 관리
 - **교회 행사**: 다가오는 행사 및 일정 관리
 
+### 🎵 악보 관리
+- **악보 업로드**: 이미지 파일 업로드 및 관리
+- **악보 라이브러리**: 카테고리별 악보 조회
+- **QR 코드 생성**: 악보 공유용 QR 코드 자동 생성
+
+### 👥 순모임 관리
+- **순모임 등록**: 순모임 정보 등록 및 관리
+- **사진/동영상 업로드**: 순모임 활동 사진 및 동영상 업로드
+- **멤버 관리**: 순모임 멤버 정보 관리
+
 ### 🔧 기술적 특징
 - REST API 제공
 - Swagger UI 통합 (API 문서화)
@@ -34,7 +44,8 @@ Spring Boot와 Thymeleaf를 사용한 교회 모바일 주보 관리 시스템�
 - **Spring Data JPA**
 - **Spring Security**
 - **H2 Database** (개발용)
-- **MySQL** (운영용)
+- **PostgreSQL** (운영용)
+- **Cloudinary** (이미지 업로드)
 
 ### Frontend
 - **Thymeleaf** (템플릿 엔진)
@@ -43,9 +54,9 @@ Spring Boot와 Thymeleaf를 사용한 교회 모바일 주보 관리 시스템�
 - **JavaScript** (AJAX 통신)
 
 ### 도구
-- **Maven** (빌드 도구)
-- **Swagger/OpenAPI 3** (API 문서화)
+- **Gradle** (빌드 도구)
 - **Lombok** (코드 간소화)
+- **Railway** (배포 플랫폼)
 
 ## 프로젝트 구조
 
@@ -83,21 +94,38 @@ src/
 
 ### 1. 사전 요구사항
 - Java 17 이상
-- Maven 3.6 이상
+- Gradle 7.0 이상
 
-### 2. 프로젝트 클론 및 실행
+### 2. 프로젝트 클론 및 환경변수 설정
 ```bash
-# 프로젝트 디렉토리로 이동
-cd bulletin
+# 프로젝트 클론
+git clone https://github.com/Ukkim1230/bulletin-showcase.git
+cd bulletin-showcase
 
-# Maven을 사용한 빌드 및 실행
-mvn spring-boot:run
+# 환경변수 파일 생성
+cp env.template .env
+
+# .env 파일에서 실제 값으로 수정
+# - 데이터베이스 연결 정보
+# - Cloudinary API 키
+# - 기타 설정값들
 ```
 
-### 3. 애플리케이션 접속
+### 3. 애플리케이션 실행
+```bash
+# Gradle을 사용한 빌드 및 실행
+./gradlew bootRun
+
+# 또는 빌드 후 실행
+./gradlew build
+java -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar
+```
+
+### 4. 애플리케이션 접속
 - **메인 페이지**: http://localhost:8080
 - **모바일 페이지**: http://localhost:8080/mobile
-- **API 문서**: http://localhost:8080/swagger-ui.html
+- **순모임 관리**: http://localhost:8080/small-groups
+- **악보 관리**: http://localhost:8080/sheet-music
 - **H2 콘솔**: http://localhost:8080/h2-console (개발용)
 
 ## API 엔드포인트
