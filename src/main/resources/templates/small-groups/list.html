@@ -801,6 +801,107 @@
         }
     </script>
     
+    <!-- QR 모달 -->
+    <div id="qrModal" class="modal" tabindex="-1" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">디지털 주보</h5>
+                    <button type="button" class="btn-close" onclick="closeQRModal()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <h3 class="fw-semibold mb-1" style="color: var(--foreground);">디지털 주보</h3>
+                        <p class="mb-3" style="font-size: 0.875rem; color: var(--muted-foreground);">QR 코드를 스캔하여 온라인 주보를 확인하세요</p>
+                        
+                        <!-- QR 코드 아이콘 표시 -->
+                        <div class="d-flex align-items-center justify-content-center rounded-2 mx-auto mb-3" 
+                             style="width: 4rem; height: 4rem; background: var(--primary); background-opacity: 0.1;">
+                            <i class="fas fa-qrcode" style="font-size: 2rem; color: var(--primary);"></i>
+                        </div>
+                        
+                        <!-- QR 코드 공유 버튼 -->
+                        <button class="btn btn-outline-primary btn-sm" onclick="shareQRCode()">
+                            <i class="fas fa-share-alt me-1"></i> 주보 공유하기
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeQRModal()">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* QR 모달 스타일 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-dialog {
+            max-width: 500px;
+            width: 95%;
+            margin: 0;
+        }
+
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            background: var(--background);
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--background);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--foreground);
+            margin: 0;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 2rem 2rem 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--muted-foreground);
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-close:hover {
+            color: var(--foreground);
+        }
+    </style>
+    
     <!-- 하단 네비게이션 및 새로고침 버튼 -->
     <th:block th:replace="~{fragments/bottom-nav :: bottom-nav}"></th:block>
     <th:block th:replace="~{fragments/bottom-nav :: refresh-btn}"></th:block>

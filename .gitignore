@@ -106,3 +106,7 @@ temp/
 # Application specific
 application-local.yml
 application-dev.yml
+
+# Build artifacts
+bin/
+frontend/

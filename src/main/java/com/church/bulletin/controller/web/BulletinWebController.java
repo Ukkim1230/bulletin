@@ -33,11 +33,8 @@ public class BulletinWebController {
         BulletinService.BulletinData bulletin = bulletinService.getTodayBulletin();
         model.addAttribute("bulletin", bulletin);
         model.addAttribute("currentDate", LocalDate.now());
-        
-        // QR 코드 생성 (현재 URL)
         String qrCodeImage = qrCodeService.generateQRCodeImage(appUrl, 250, 250);
         model.addAttribute("qrCodeImage", qrCodeImage);
-        model.addAttribute("appUrl", appUrl);
         
         return "mobile";
     }
