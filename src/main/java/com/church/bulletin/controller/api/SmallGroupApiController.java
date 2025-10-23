@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -72,17 +73,39 @@ public class SmallGroupApiController {
      * 순모임 생성 (파일 업로드 포함)
      */
     @PostMapping("/with-files")
-    public ResponseEntity<SmallGroup> createSmallGroupWithFiles(@ModelAttribute SmallGroup smallGroup) {
+    public ResponseEntity<SmallGroup> createSmallGroupWithFiles(
+            @RequestParam String name,
+            @RequestParam String leader,
+            @RequestParam Integer memberCount,
+            @RequestParam String location,
+            @RequestParam String meetingTime,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String description,
+            @RequestParam(defaultValue = "true") Boolean isActive,
+            @RequestParam(required = false) List<MultipartFile> imageFiles,
+            @RequestParam(required = false) List<MultipartFile> videoFiles) {
         try {
-            log.info("순모임 생성 요청 (파일 포함): name={}, leader={}, category={}", 
-                    smallGroup.getName(), smallGroup.getLeader(), smallGroup.getCategory());
+            log.info("순모임 생성 요청 (파일 포함): name={}, leader={}, category={}", name, leader, category);
+            
+            SmallGroup smallGroup = SmallGroup.builder()
+                    .name(name)
+                    .leader(leader)
+                    .memberCount(memberCount)
+                    .location(location)
+                    .meetingTime(meetingTime)
+                    .category(category)
+                    .description(description)
+                    .isActive(isActive)
+                    .imageFiles(imageFiles)
+                    .videoFiles(videoFiles)
+                    .build();
             
             SmallGroup savedSmallGroup = smallGroupService.createSmallGroup(smallGroup);
             log.info("순모임 생성 성공: {}", savedSmallGroup.getId());
             return ResponseEntity.ok(savedSmallGroup);
         } catch (Exception e) {
             log.error("순모임 생성 실패", e);
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.internalServerError().build();
         }
     }
     
@@ -109,9 +132,35 @@ public class SmallGroupApiController {
      * 순모임 수정 (파일 업로드 포함)
      */
     @PutMapping("/{id}/with-files")
-    public ResponseEntity<SmallGroup> updateSmallGroupWithFiles(@PathVariable Long id, @ModelAttribute SmallGroup smallGroup) {
+    public ResponseEntity<SmallGroup> updateSmallGroupWithFiles(
+            @PathVariable Long id,
+            @RequestParam String name,
+            @RequestParam String leader,
+            @RequestParam Integer memberCount,
+            @RequestParam String location,
+            @RequestParam String meetingTime,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String description,
+            @RequestParam(defaultValue = "true") Boolean isActive,
+            @RequestParam(required = false) List<MultipartFile> imageFiles,
+            @RequestParam(required = false) List<MultipartFile> videoFiles) {
         try {
-            smallGroup.setId(id);
+            log.info("순모임 수정 요청 (파일 포함): id={}, name={}, leader={}", id, name, leader);
+            
+            SmallGroup smallGroup = SmallGroup.builder()
+                    .id(id)
+                    .name(name)
+                    .leader(leader)
+                    .memberCount(memberCount)
+                    .location(location)
+                    .meetingTime(meetingTime)
+                    .category(category)
+                    .description(description)
+                    .isActive(isActive)
+                    .imageFiles(imageFiles)
+                    .videoFiles(videoFiles)
+                    .build();
+            
             SmallGroup updatedSmallGroup = smallGroupService.updateSmallGroup(smallGroup);
             if (updatedSmallGroup == null) {
                 return ResponseEntity.notFound().build();

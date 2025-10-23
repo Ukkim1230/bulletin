@@ -43,6 +43,13 @@ spring:
     add-properties: false
     
   # Security 설정 (로그인 기능 비활성화)
+  
+  # 파일 업로드 설정
+  servlet:
+    multipart:
+      max-file-size: 10MB        # 개별 파일 최대 크기
+      max-request-size: 50MB     # 전체 요청 최대 크기
+      enabled: true
 
 # 서버 설정
 server:
@@ -105,6 +112,11 @@ spring:
   h2:
     console:
       enabled: false
+  servlet:
+    multipart:
+      max-file-size: 10MB        # 개별 파일 최대 크기
+      max-request-size: 50MB     # 전체 요청 최대 크기
+      enabled: true
 
 server:
   port: ${PORT:8080}
