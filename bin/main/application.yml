@@ -72,9 +72,9 @@ file:
 
 # Cloudinary 설정
 cloudinary:
-  cloud-name: ${CLOUDINARY_CLOUD_NAME:dxmkhavyb}
-  api-key: ${CLOUDINARY_API_KEY:149669458686891}
-  api-secret: ${CLOUDINARY_API_SECRET:z94Qqz3591tHOAcuiXfmzs555_U}
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}
 
 # 로깅 설정
 logging:
@@ -93,9 +93,9 @@ spring:
     activate:
       on-profile: railway
   datasource:
-    url: jdbc:postgresql://postgres.railway.internal:5432/railway
-    username: postgres
-    password: OdzyUnatXOkxSMMdQwXFVGFRqRsOKiTJ
+    url: ${DATABASE_URL:jdbc:postgresql://postgres.railway.internal:5432/railway}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
