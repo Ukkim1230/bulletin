@@ -19,26 +19,29 @@
             <!-- 우측: 아이콘 버튼들 -->
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <!-- 로그인 상태에 따른 버튼 표시 -->
-                <div th:if="${session.user != null}" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 0.875rem; color: var(--muted-foreground);" th:text="'안녕하세요, ' + ${session.username} + '님'">안녕하세요, 사용자님</span>
+                <div th:if="${session.user != null}" class="user-info" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="username-text" style="font-size: 0.875rem; color: var(--muted-foreground);" th:text="'안녕하세요, ' + ${session.username} + '님'">안녕하세요, 사용자님</span>
                     <form th:action="@{/logout}" method="post" style="display: inline;">
-                        <button type="submit" style="background: var(--destructive); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s;" 
+                        <button type="submit" class="logout-btn" style="background: var(--destructive); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;" 
                                 onmouseover="this.style.background='var(--destructive-hover)'" 
                                 onmouseout="this.style.background='var(--destructive)'">
-                            <i class="fas fa-sign-out-alt me-1"></i>로그아웃
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="btn-text">로그아웃</span>
                         </button>
                     </form>
                 </div>
-                <div th:if="${session.user == null}" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <a th:href="@{/login}" style="background: var(--primary); color: var(--primary-foreground); border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; transition: background-color 0.2s;" 
+                <div th:if="${session.user == null}" class="auth-buttons" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <a th:href="@{/login}" class="login-btn" style="background: var(--primary); color: var(--primary-foreground); border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; transition: background-color 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;" 
                        onmouseover="this.style.background='var(--primary-hover)'" 
                        onmouseout="this.style.background='var(--primary)'">
-                        <i class="fas fa-sign-in-alt me-1"></i>로그인
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span class="btn-text">로그인</span>
                     </a>
-                    <a th:href="@{/register}" style="background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; transition: background-color 0.2s;" 
+                    <a th:href="@{/register}" class="register-btn" style="background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; transition: background-color 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;" 
                        onmouseover="this.style.background='var(--accent)'" 
                        onmouseout="this.style.background='var(--secondary)'">
-                        <i class="fas fa-user-plus me-1"></i>회원가입
+                        <i class="fas fa-user-plus"></i>
+                        <span class="btn-text">회원가입</span>
                     </a>
                 </div>
                 
@@ -115,6 +118,89 @@
     <style>
         .menu-btn:hover {
             background: rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        /* 모바일 반응형 스타일 */
+        @media (max-width: 768px) {
+            .auth-buttons {
+                gap: 0.25rem !important;
+            }
+            
+            .login-btn,
+            .register-btn {
+                padding: 0.5rem !important;
+                min-width: auto !important;
+            }
+            
+            .login-btn .btn-text,
+            .register-btn .btn-text {
+                display: none;
+            }
+            
+            .login-btn i,
+            .register-btn i {
+                margin: 0 !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .auth-buttons {
+                gap: 0.25rem !important;
+            }
+            
+            .login-btn,
+            .register-btn {
+                padding: 0.5rem !important;
+            }
+        }
+        
+        /* 작은 화면에서 헤더 제목 줄이기 */
+        @media (max-width: 640px) {
+            header .container {
+                padding: 0 0.75rem !important;
+            }
+            
+            header .container > div:first-child {
+                gap: 0.5rem !important;
+            }
+            
+            header .container > div:first-child h1 {
+                font-size: 0.875rem !important;
+            }
+            
+            header .container > div:first-child p {
+                font-size: 0.625rem !important;
+            }
+            
+            /* 로그아웃 버튼도 모바일 반응형 */
+            .user-info .username-text {
+                display: none !important;
+            }
+            
+            .logout-btn {
+                padding: 0.5rem !important;
+            }
+            
+            .logout-btn .btn-text {
+                display: none !important;
+            }
+            
+            /* 우측 아이콘 버튼들 간격 조정 */
+            header .container > div:last-child {
+                gap: 0.25rem !important;
+            }
+        }
+        
+        /* 매우 작은 화면 (360px 이하) */
+        @media (max-width: 360px) {
+            header .container > div:first-child > div:first-child {
+                width: 1.5rem !important;
+                height: 1.5rem !important;
+            }
+            
+            header .container > div:first-child > div:first-child span {
+                font-size: 0.75rem !important;
+            }
         }
     </style>
 

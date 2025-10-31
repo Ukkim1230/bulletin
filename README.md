@@ -56,7 +56,8 @@ Spring Boot와 Thymeleaf를 사용한 교회 모바일 주보 관리 시스템�
 ### 도구
 - **Gradle** (빌드 도구)
 - **Lombok** (코드 간소화)
-- **Railway** (배포 플랫폼)
+- **Docker** (컨테이너화)
+- **Railway** 또는 **AWS EC2** (배포 플랫폼)
 
 ## 프로젝트 구조
 
@@ -147,18 +148,58 @@ java -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar
 - `GET /api/bulletin/prayer-requests` - 기도제목
 - `GET /api/bulletin/events/upcoming` - 다가오는 행사
 
+## 배포 방법
+
+### Railway 배포
+Railway 플랫폼을 사용하여 배포할 수 있습니다. 자세한 내용은 Railway 문서를 참조하세요.
+
+### AWS EC2 배포
+AWS EC2 인스턴스에 배포하는 방법은 [DEPLOY_EC2.md](DEPLOY_EC2.md) 파일을 참조하세요.
+
+**Linux/Mac에서 배포:**
+```bash
+# EC2 인스턴스에서
+git clone https://github.com/your-repo/bulletin.git
+cd bulletin
+cp env.template .env
+# .env 파일 수정
+sudo ./deploy.sh
+```
+
+**Windows에서 배포:**
+Windows CMD/PowerShell에서도 배포 가능합니다. 자세한 내용은 [DEPLOY_WINDOWS.md](DEPLOY_WINDOWS.md) 파일을 참조하세요.
+
+**빠른 시작 (Windows):**
+```cmd
+REM 배치 파일 사용
+deploy-to-ec2.bat your-ec2-ip C:\path\to\key.pem
+
+REM 또는 PowerShell 스크립트 사용
+.\deploy-to-ec2.ps1 -Ec2Ip "your-ec2-ip" -KeyPath "C:\path\to\key.pem"
+
+REM 또는 SSH로 직접 접속
+ssh -i "C:\path\to\key.pem" ec2-user@your-ec2-ip
+```
+
 ## 데이터베이스 설정
 
 ### 개발 환경 (H2)
 기본적으로 H2 인메모리 데이터베이스를 사용하며, 애플리케이션 시작 시 샘플 데이터가 자동으로 생성됩니다.
 
-### 운영 환경 (MySQL)
-`application.yml`에서 `spring.profiles.active=prod` 설정 후 MySQL 연결 정보를 환경변수로 설정:
+### 운영 환경 (PostgreSQL)
+`application.yml`에서 프로필을 설정하고 PostgreSQL 연결 정보를 환경변수로 설정:
 
+**Railway 배포 시:**
 ```bash
-export DB_USERNAME=your_username
-export DB_PASSWORD=your_password
-export SERVER_PORT=8080
+SPRING_PROFILES_ACTIVE=railway
+```
+
+**EC2 배포 시:**
+```bash
+SPRING_PROFILES_ACTIVE=ec2
+DATABASE_URL=jdbc:postgresql://localhost:5432/bulletin
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
 ```
 
 ## 커스터마이징

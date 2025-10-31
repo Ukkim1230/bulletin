@@ -21,8 +21,13 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 # 빌드 실행
 RUN ./gradlew clean build -x test --no-daemon
 
+# 업로드 디렉토리 생성
+RUN mkdir -p uploads/bulletin-images uploads/sheet-music uploads/small-groups logs
+
 # JAR 파일 실행
 EXPOSE 8080
 ENV PORT=8080
-ENV SPRING_PROFILES_ACTIVE=railway
-CMD ["sh", "-c", "export PORT=${PORT:-8080} && echo 'Starting with PORT='$PORT && java -Dspring.profiles.active=railway -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar"]
+ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-ec2}
+
+# Docker에서 실행 시 사용 (Railway 또는 EC2 모두 지원)
+CMD ["sh", "-c", "export PORT=${PORT:-8080} && echo 'Starting with PORT='$PORT && echo 'Profile='$SPRING_PROFILES_ACTIVE && java -Xms512m -Xmx1024m -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-ec2} -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar"]

@@ -1,0 +1,31 @@
+[Unit]
+Description=교회 모바일 주보 시스템
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/bulletin
+EnvironmentFile=/opt/bulletin/.env
+Environment="SPRING_PROFILES_ACTIVE=ec2"
+Environment="JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto"
+ExecStart=/usr/bin/java -Xms512m -Xmx1024m -jar /opt/bulletin/bulletin-0.0.1-SNAPSHOT.jar
+ExecStop=/bin/kill -15 $MAINPID
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bulletin
+
+# 보안 설정
+NoNewPrivileges=true
+PrivateTmp=true
+
+# 리소스 제한
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
+
