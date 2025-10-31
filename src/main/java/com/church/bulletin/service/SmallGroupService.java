@@ -212,7 +212,7 @@ public class SmallGroupService {
      */
     private String uploadFile(MultipartFile file, String folder) {
         try {
-            if ("railway".equals(activeProfile)) {
+            if (!"ec2".equals(activeProfile)) {
                 // Cloudinary 사용
                 return cloudinaryService.uploadImage(file, folder);
             } else {

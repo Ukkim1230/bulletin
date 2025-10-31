@@ -123,8 +123,8 @@ public class SheetMusicService {
                 String contentType = file.getContentType();
                 boolean isImage = contentType != null && contentType.startsWith("image/");
                 
-                // Railway 프로필이면 Cloudinary 사용, 로컬이면 파일 시스템 사용
-                if ("railway".equals(activeProfile)) {
+                // EC2 프로필이면 로컬 파일 시스템 사용, 그 외에는 Cloudinary 사용
+                if (!"ec2".equals(activeProfile)) {
                     // Cloudinary 사용
                     log.info("Cloudinary를 사용하여 파일 업로드 시작");
                     String imageUrl = cloudinaryService.uploadImage(file, "sheet-music");
@@ -213,8 +213,8 @@ public class SheetMusicService {
         SheetMusic sheetMusic = sheetMusicRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("악보를 찾을 수 없습니다: " + id));
         
-        // Railway 프로필이면 Cloudinary 이미지 삭제
-        if ("railway".equals(activeProfile)) {
+        // EC2 프로필이 아니면 Cloudinary 이미지 삭제
+        if (!"ec2".equals(activeProfile)) {
             if (sheetMusic.getImageUrl() != null && !sheetMusic.getImageUrl().isEmpty()) {
                 try {
                     String publicId = cloudinaryService.extractPublicId(sheetMusic.getImageUrl());

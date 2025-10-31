@@ -63,7 +63,7 @@ server:
 
 # 애플리케이션 설정
 app:
-  url: https://bulletin-production.up.railway.app  # Railway 배포 환경 URL
+  url: ${APP_URL:http://localhost:8080}
 
 # 파일 업로드 설정
 file:
@@ -85,57 +85,6 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 
-
----
-# Railway 환경 설정
-spring:
-  config:
-    activate:
-      on-profile: railway
-  datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://postgres.railway.internal:5432/railway}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 5
-      minimum-idle: 2
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  thymeleaf:
-    cache: true
-  h2:
-    console:
-      enabled: false
-  servlet:
-    multipart:
-      max-file-size: 10MB        # 개별 파일 최대 크기
-      max-request-size: 50MB     # 전체 요청 최대 크기
-      enabled: true
-
-server:
-  port: ${PORT:8080}
-  servlet:
-    context-path: /
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
-
-# Railway 배포 환경에서 실제 도메인 사용
-app:
-  url: ${APP_URL:https://bulletin-production.up.railway.app}
-
-logging:
-  level:
-    com.church.bulletin: INFO
-    org.springframework.security: WARN
-    org.hibernate.SQL: WARN
 
 ---
 # EC2 환경 설정

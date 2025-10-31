@@ -29,5 +29,5 @@ EXPOSE 8080
 ENV PORT=8080
 ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-ec2}
 
-# Docker에서 실행 시 사용 (Railway 또는 EC2 모두 지원)
+# Docker에서 실행 시 사용 (EC2 환경)
 CMD ["sh", "-c", "export PORT=${PORT:-8080} && echo 'Starting with PORT='$PORT && echo 'Profile='$SPRING_PROFILES_ACTIVE && java -Xms512m -Xmx1024m -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-ec2} -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar"]

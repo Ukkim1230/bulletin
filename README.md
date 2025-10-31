@@ -57,7 +57,7 @@ Spring Boot와 Thymeleaf를 사용한 교회 모바일 주보 관리 시스템�
 - **Gradle** (빌드 도구)
 - **Lombok** (코드 간소화)
 - **Docker** (컨테이너화)
-- **Railway** 또는 **AWS EC2** (배포 플랫폼)
+- **AWS EC2** (배포 플랫폼)
 
 ## 프로젝트 구조
 
@@ -150,9 +150,6 @@ java -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar
 
 ## 배포 방법
 
-### Railway 배포
-Railway 플랫폼을 사용하여 배포할 수 있습니다. 자세한 내용은 Railway 문서를 참조하세요.
-
 ### AWS EC2 배포
 AWS EC2 인스턴스에 배포하는 방법은 [DEPLOY_EC2.md](DEPLOY_EC2.md) 파일을 참조하세요.
 
@@ -188,11 +185,6 @@ ssh -i "C:\path\to\key.pem" ec2-user@your-ec2-ip
 
 ### 운영 환경 (PostgreSQL)
 `application.yml`에서 프로필을 설정하고 PostgreSQL 연결 정보를 환경변수로 설정:
-
-**Railway 배포 시:**
-```bash
-SPRING_PROFILES_ACTIVE=railway
-```
 
 **EC2 배포 시:**
 ```bash
