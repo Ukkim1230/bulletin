@@ -1,0 +1,5 @@
+[33m6151553[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m d
+[33m058057c[m Merge: GitHub Actions 배포 설정 통합 및 민감한 정보 제거
+[33m01a7a14[m d
+[33mcc0e688[m Create deploy.yml
+[33m26af919[m d
