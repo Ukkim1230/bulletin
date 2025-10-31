@@ -38,4 +38,3 @@ jobs:
         timeout: 60s
         script: |
           sudo systemctl status bulletin --no-pager -l | head -20
-
