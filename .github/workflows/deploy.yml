@@ -25,7 +25,10 @@ jobs:
         debug: true
         script: |
           cd /opt/bulletin
-          sudo git pull origin main
+          sudo git fetch origin
+          sudo git reset --hard origin/main
+          sudo git clean -fd
+          sudo chmod +x deploy.sh
           sudo ./deploy.sh
     
     - name: Verify deployment
