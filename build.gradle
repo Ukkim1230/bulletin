@@ -57,3 +57,8 @@ tasks.withType(JavaCompile) {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Disable plain JAR, only generate Spring Boot JAR
+tasks.named('jar') {
+    enabled = false
+}
