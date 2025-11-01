@@ -25,15 +25,26 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew clean build -x test --no-daemon
     
-    - name: Copy JAR to EC2
-      uses: appleboy/scp-action@master
+    - name: Deploy JAR to EC2
+      uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
-        source: "build/libs/bulletin-0.0.1-SNAPSHOT.jar"
-        target: "/tmp/"
+        timeout: 60s
+        command_timeout: 5m
+        script: |
+          mkdir -p /tmp/bulletin-deploy
+    
+    - name: Copy JAR to EC2
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem
+        chmod 600 /tmp/ec2_key.pem
+        scp -o StrictHostKeyChecking=no -i /tmp/ec2_key.pem \
+          build/libs/bulletin-0.0.1-SNAPSHOT.jar \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/bulletin.jar
+        rm /tmp/ec2_key.pem
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
@@ -47,7 +58,7 @@ jobs:
         debug: true
         script: |
           sudo mkdir -p /opt/bulletin
-          sudo cp /tmp/build/libs/bulletin-0.0.1-SNAPSHOT.jar /opt/bulletin/bulletin.jar
+          sudo cp /tmp/bulletin.jar /opt/bulletin/bulletin.jar
           
           # 환경 변수 파일 확인
           if [ ! -f /opt/bulletin/.env ]; then
