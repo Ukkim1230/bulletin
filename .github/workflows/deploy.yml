@@ -36,6 +36,36 @@ jobs:
         JAR_SIZE=$(du -h "$JAR_FILE" | cut -f1)
         echo "✅ JAR 파일 확인: $JAR_SIZE"
     
+    - name: Copy JAR file to EC2
+      run: |
+        # SSH 키 파일 생성
+        echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem
+        chmod 600 /tmp/ec2_key.pem
+        
+        # SSH 옵션
+        SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o ConnectionAttempts=3"
+        
+        # JAR 파일 전송
+        echo "📦 JAR 파일 전송 중..."
+        scp $SSH_OPTS -i /tmp/ec2_key.pem \
+          build/libs/bulletin-0.0.1-SNAPSHOT.jar \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/ || {
+          echo "❌ JAR 파일 전송 실패!"
+          rm -f /tmp/ec2_key.pem
+          exit 1
+        }
+        
+        # 서비스 파일 전송 (선택적)
+        if [ -f bulletin.service ]; then
+          echo "📦 서비스 파일 전송 중..."
+          scp $SSH_OPTS -i /tmp/ec2_key.pem \
+            bulletin.service \
+            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/ || true
+        fi
+        
+        rm -f /tmp/ec2_key.pem
+        echo "✅ 파일 전송 완료"
+    
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -133,36 +163,6 @@ jobs:
           # 9. 최종 상태 확인
           echo -e "${GREEN}📊 서비스 상태:${NC}"
           sudo systemctl status $SERVICE_NAME --no-pager | head -20
-    
-    - name: Copy JAR file
-      run: |
-        # SSH 키 파일 생성
-        echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem
-        chmod 600 /tmp/ec2_key.pem
-        
-        # SSH 옵션
-        SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o ConnectionAttempts=3"
-        
-        # JAR 파일 전송
-        echo "📦 JAR 파일 전송 중..."
-        scp $SSH_OPTS -i /tmp/ec2_key.pem \
-          build/libs/bulletin-0.0.1-SNAPSHOT.jar \
-          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/ || {
-          echo "❌ JAR 파일 전송 실패!"
-          rm -f /tmp/ec2_key.pem
-          exit 1
-        }
-        
-        # 서비스 파일 전송 (선택적)
-        if [ -f bulletin.service ]; then
-          echo "📦 서비스 파일 전송 중..."
-          scp $SSH_OPTS -i /tmp/ec2_key.pem \
-            bulletin.service \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/ || true
-        fi
-        
-        rm -f /tmp/ec2_key.pem
-        echo "✅ 파일 전송 완료"
     
     - name: Verify deployment
       uses: appleboy/ssh-action@master
