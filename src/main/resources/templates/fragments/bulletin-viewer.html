@@ -241,6 +241,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            cursor: pointer;
         }
         
         .bulletin-image {
@@ -248,6 +249,33 @@
             height: 100%;
             object-fit: contain;
             user-select: none;
+        }
+        
+        /* UI 요소들 숨김/표시 */
+        .bulletin-ui-hidden .bulletin-home-btn,
+        .bulletin-ui-hidden .bulletin-edit-btn,
+        .bulletin-ui-hidden .bulletin-add-btn,
+        .bulletin-ui-hidden .bulletin-delete-btn,
+        .bulletin-ui-hidden .bulletin-page-indicator,
+        .bulletin-ui-hidden .bulletin-nav-btn,
+        .bulletin-ui-hidden .bulletin-dots,
+        .bulletin-ui-hidden .bottom-nav {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.3s ease !important;
+        }
+        
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bulletin-home-btn,
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bulletin-edit-btn,
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bulletin-add-btn,
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bulletin-delete-btn,
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bulletin-page-indicator,
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bulletin-nav-btn,
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bulletin-dots,
+        .bulletin-viewer:not(.bulletin-ui-hidden) .bottom-nav {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transition: opacity 0.3s ease !important;
         }
         
         .bulletin-nav-btn {
@@ -518,6 +546,10 @@
             window.currentPage = 0;
             window.touchStartX = 0;
             window.touchEndX = 0;
+            window.touchStartY = 0;
+            window.touchEndY = 0;
+            window.touchStartTime = 0;
+            window.touchEndTime = 0;
             window.minSwipeDistance = 50;
         }
         
@@ -546,7 +578,10 @@
                 if (!loaded) return;
             }
             
-            document.getElementById('bulletinViewer').style.display = 'block';
+            const bulletinViewer = document.getElementById('bulletinViewer');
+            bulletinViewer.style.display = 'block';
+            // UI가 숨겨져 있었다면 다시 표시
+            bulletinViewer.classList.remove('bulletin-ui-hidden');
             document.body.style.overflow = 'hidden';
             window.goToPage(0);
         };
@@ -944,6 +979,14 @@
             }
         }
         
+        // UI 토글 함수
+        window.toggleBulletinUI = function() {
+            const bulletinViewer = document.getElementById('bulletinViewer');
+            if (bulletinViewer) {
+                bulletinViewer.classList.toggle('bulletin-ui-hidden');
+            }
+        };
+        
         // 터치 스와이프 이벤트 (중복 방지)
         if (!window.bulletinSwipeInitialized) {
             window.bulletinSwipeInitialized = true;
@@ -951,20 +994,48 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const bulletinContainer = document.getElementById('bulletinContainer');
                 if (bulletinContainer) {
+                    let isTouchDevice = false;
+                    
                     bulletinContainer.addEventListener('touchstart', (e) => {
+                        isTouchDevice = true;
                         window.touchStartX = e.changedTouches[0].screenX;
+                        window.touchStartY = e.changedTouches[0].screenY;
+                        window.touchStartTime = Date.now();
                     });
                     
                     bulletinContainer.addEventListener('touchend', (e) => {
                         window.touchEndX = e.changedTouches[0].screenX;
+                        window.touchEndY = e.changedTouches[0].screenY;
+                        window.touchEndTime = Date.now();
+                        
                         const swipeDistance = window.touchEndX - window.touchStartX;
+                        const verticalDistance = Math.abs(window.touchEndY - window.touchStartY);
+                        const touchDuration = window.touchEndTime - window.touchStartTime;
                         
-                        if (Math.abs(swipeDistance) < window.minSwipeDistance) return;
+                        // 탭(짧은 터치)인지 스와이프인지 구분
+                        if (touchDuration < 300 && Math.abs(swipeDistance) < 30 && verticalDistance < 30) {
+                            // 탭으로 인식 - UI 토글
+                            window.toggleBulletinUI();
+                        } else if (Math.abs(swipeDistance) >= window.minSwipeDistance && verticalDistance < 50) {
+                            // 스와이프로 인식 - 페이지 넘김
+                            if (swipeDistance > 0) {
+                                window.goToPrevPage();
+                            } else {
+                                window.goToNextPage();
+                            }
+                        }
+                    });
+                    
+                    // 클릭 이벤트는 터치가 없는 데스크톱에서만 작동
+                    bulletinContainer.addEventListener('click', (e) => {
+                        // 터치 디바이스에서는 클릭 이벤트 무시
+                        if (isTouchDevice) {
+                            return;
+                        }
                         
-                        if (swipeDistance > 0) {
-                            window.goToPrevPage();
-                        } else {
-                            window.goToNextPage();
+                        // 이미지를 클릭했을 때만 토글 (데스크톱)
+                        if (e.target.tagName === 'IMG' || e.target.id === 'bulletinContainer') {
+                            window.toggleBulletinUI();
                         }
                     });
                 }
