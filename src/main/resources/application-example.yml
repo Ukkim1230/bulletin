@@ -1,0 +1,134 @@
+spring:
+  # 데이터베이스 설정
+  datasource:
+    url: jdbc:h2:mem:testdb  # 개발용 H2 인메모리 DB
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA/Hibernate 설정
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 개발용 (운영시 validate로 변경)
+    show-sql: true
+    format-sql: true
+        
+  # H2 Console 활성화 (개발용)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      
+  # Thymeleaf 설정
+  thymeleaf:
+    cache: false  # 개발용 (운영시 true로 변경)
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    check-template: true
+    check-template-location: true
+    
+  # DevTools 설정 (Hot Reload)
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/resources/templates,src/main/resources/static
+      exclude: WEB-INF/**
+      poll-interval: 1000
+      quiet-period: 400
+    livereload:
+      enabled: true
+      port: 35729
+    add-properties: false
+    
+  # 파일 업로드 설정
+  servlet:
+    multipart:
+      max-file-size: 10MB        # 개별 파일 최대 크기
+      max-request-size: 50MB     # 전체 요청 최대 크기
+      enabled: true
+
+# 서버 설정
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+# 애플리케이션 설정
+app:
+  url: ${APP_URL:http://localhost:8080}
+
+# 파일 업로드 설정
+file:
+  upload:
+    bulletin-dir: uploads/bulletin-images/
+
+# Cloudinary 설정 (환경변수로 주입)
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:your-cloud-name}
+  api-key: ${CLOUDINARY_API_KEY:your-api-key}
+  api-secret: ${CLOUDINARY_API_SECRET:your-api-secret}
+
+# 로깅 설정
+logging:
+  level:
+    com.church.bulletin: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+---
+# 운영 환경 설정 예제
+spring:
+  config:
+    activate:
+      on-profile: production
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/bulletin}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:your-password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+  thymeleaf:
+    cache: true
+  h2:
+    console:
+      enabled: false
+
+server:
+  port: ${PORT:8080}
+
+app:
+  url: ${APP_URL:https://your-domain.com}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:your-cloud-name}
+  api-key: ${CLOUDINARY_API_KEY:your-api-key}
+  api-secret: ${CLOUDINARY_API_SECRET:your-api-secret}
+
+logging:
+  level:
+    com.church.bulletin: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  file:
+    name: ${LOG_FILE:logs/bulletin.log}
+
