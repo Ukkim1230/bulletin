@@ -46,7 +46,7 @@ jobs:
         timeout: 60s
         command_timeout: 5m
         debug: false
-        script: |
+        script: |-
           set -e
           
           # 색상 정의
@@ -81,7 +81,7 @@ jobs:
           # 4. .env 파일 처리
           if [ ! -f "$APP_DIR/.env" ]; then
             echo -e "${YELLOW}📝 .env 파일 생성 중...${NC}"
-            sudo tee $APP_DIR/.env > /dev/null << 'EOF'
+            cat << 'ENVEOF' | sudo tee $APP_DIR/.env > /dev/null
 # 데이터베이스 설정
 DATABASE_URL=jdbc:postgresql://localhost:5432/bulletin
 DB_USERNAME=postgres
@@ -94,7 +94,7 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 # 애플리케이션 설정
 PORT=8080
-EOF
+ENVEOF
             sudo chown ec2-user:ec2-user $APP_DIR/.env
             sudo chmod 600 $APP_DIR/.env
             echo -e "${GREEN}✅ .env 파일 생성 완료 (수정 필요!)${NC}"
