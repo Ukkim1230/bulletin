@@ -12,10 +12,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -26,48 +26,54 @@ jobs:
         chmod +x gradlew
         ./gradlew clean build -x test --no-daemon -q
     
-    - name: Verify JAR file
+    - name: Locate JAR file
+      id: jar
       run: |
-        JAR_FILE="build/libs/bulletin-0.0.1-SNAPSHOT.jar"
-        if [ ! -f "$JAR_FILE" ]; then
+        JAR=$(ls -1 build/libs/*SNAPSHOT*.jar 2>/dev/null | head -n1)
+        if [ -z "$JAR" ]; then
           echo "❌ JAR 파일을 찾을 수 없습니다!"
+          echo "build/libs 디렉토리 내용:"
+          ls -la build/libs/ || echo "디렉토리가 없습니다"
           exit 1
         fi
-        JAR_SIZE=$(du -h "$JAR_FILE" | cut -f1)
-        echo "✅ JAR 파일 확인: $JAR_SIZE"
+        echo "jar=$JAR" >> $GITHUB_OUTPUT
+        JAR_SIZE=$(du -h "$JAR" | cut -f1)
+        echo "✅ JAR 파일 발견: $JAR ($JAR_SIZE)"
     
-    - name: Copy JAR file to EC2
+    - name: Copy files to EC2
+      env:
+        SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        HOST: ${{ secrets.EC2_HOST }}
+        USERNAME: ${{ secrets.EC2_USERNAME }}
       run: |
-        # SSH 키 파일 생성
-        echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_key.pem
+        echo "$SSH_KEY" > /tmp/ec2_key.pem
         chmod 600 /tmp/ec2_key.pem
         
-        # SSH 옵션
         SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o ConnectionAttempts=3"
         
         # JAR 파일 전송
         echo "📦 JAR 파일 전송 중..."
         scp $SSH_OPTS -i /tmp/ec2_key.pem \
-          build/libs/bulletin-0.0.1-SNAPSHOT.jar \
-          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/bulletin-0.0.1-SNAPSHOT.jar || {
+          "${{ steps.jar.outputs.jar }}" \
+          "$USERNAME@$HOST:/tmp/app.jar" || {
           echo "❌ JAR 파일 전송 실패!"
           rm -f /tmp/ec2_key.pem
           exit 1
         }
         
-        # 서비스 파일 전송 (선택적)
+        # 서비스 파일 전송 (존재하는 경우)
         if [ -f bulletin.service ]; then
           echo "📦 서비스 파일 전송 중..."
           scp $SSH_OPTS -i /tmp/ec2_key.pem \
             bulletin.service \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/bulletin.service || true
+            "$USERNAME@$HOST:/tmp/bulletin.service" || true
         fi
         
         rm -f /tmp/ec2_key.pem
         echo "✅ 파일 전송 완료"
     
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
@@ -86,73 +92,146 @@ jobs:
           NC='\033[0m'
           
           APP_DIR="/opt/bulletin"
-          JAR_FILE="bulletin-0.0.1-SNAPSHOT.jar"
           SERVICE_NAME="bulletin"
+          RUN_USER="${{ secrets.EC2_USERNAME }}"
           
           echo -e "${GREEN}🚀 배포 시작${NC}"
           
           # 1. 디렉토리 생성
           sudo mkdir -p $APP_DIR/{logs,uploads/bulletin-images,uploads/sheet-music,uploads/small-groups}
           
-          # 2. JAR 파일 존재 확인
-          if [ ! -f /tmp/$JAR_FILE ]; then
-            echo -e "${RED}❌ JAR 파일을 찾을 수 없습니다: /tmp/$JAR_FILE${NC}"
+          # 2. JAR 파일 존재 확인 및 복사
+          if [ ! -f /tmp/app.jar ]; then
+            echo -e "${RED}❌ JAR 파일을 찾을 수 없습니다: /tmp/app.jar${NC}"
             exit 1
           fi
           
-          # 3. JAR 파일 백업 및 복사
-          if [ -f "$APP_DIR/$JAR_FILE" ]; then
-            sudo cp "$APP_DIR/$JAR_FILE" "$APP_DIR/${JAR_FILE}.backup.$(date +%s)"
+          # 기존 JAR 백업 (존재하는 경우)
+          if [ -f "$APP_DIR/app.jar" ]; then
+            sudo cp "$APP_DIR/app.jar" "$APP_DIR/app.jar.backup.$(date +%s)"
             echo -e "${YELLOW}📦 기존 파일 백업 완료${NC}"
           fi
           
-          sudo cp /tmp/$JAR_FILE $APP_DIR/$JAR_FILE
-          sudo chown ec2-user:ec2-user $APP_DIR/$JAR_FILE
-          sudo chmod 644 $APP_DIR/$JAR_FILE
+          sudo cp /tmp/app.jar $APP_DIR/app.jar
+          sudo chmod 644 $APP_DIR/app.jar
           echo -e "${GREEN}✅ JAR 파일 복사 완료${NC}"
           
-          # 4. 파일 소유권 설정
-          sudo chown -R ec2-user:ec2-user $APP_DIR/uploads $APP_DIR/logs 2>/dev/null || true
+          # 3. 전체 디렉토리 소유권 설정 (서비스 실행 사용자)
+          sudo chown -R $RUN_USER:$RUN_USER $APP_DIR
+          echo -e "${GREEN}✅ 파일 소유권 설정 완료${NC}"
           
-          # 5. .env 파일 처리
-          if [ ! -f "$APP_DIR/.env" ]; then
-            echo -e "${YELLOW}📝 .env 파일 생성 중...${NC}"
-            echo "# 데이터베이스 설정" | sudo tee $APP_DIR/.env > /dev/null
-            echo "DATABASE_URL=jdbc:postgresql://localhost:5432/bulletin" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "DB_USERNAME=postgres" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "DB_PASSWORD=your_password_here" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "# Cloudinary 설정" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "CLOUDINARY_CLOUD_NAME=your_cloud_name" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "CLOUDINARY_API_KEY=your_api_key" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "CLOUDINARY_API_SECRET=your_api_secret" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "# 애플리케이션 설정" | sudo tee -a $APP_DIR/.env > /dev/null
-            echo "PORT=8080" | sudo tee -a $APP_DIR/.env > /dev/null
-            sudo chown ec2-user:ec2-user $APP_DIR/.env
-            sudo chmod 600 $APP_DIR/.env
-            echo -e "${GREEN}✅ .env 파일 생성 완료 (수정 필요!)${NC}"
+          # 4. .env 파일 생성/업데이트
+          ENV_FILE="$APP_DIR/.env"
+          sudo touch "$ENV_FILE"
+          sudo chown $RUN_USER:$RUN_USER "$ENV_FILE"
+          sudo chmod 600 "$ENV_FILE"
+          
+          # GitHub Secrets에서 값 가져오기 (있으면 덮어쓰기)
+          write_kv() {
+            key="$1"
+            val="$2"
+            if [ -n "$val" ]; then
+              if sudo grep -q "^$key=" "$ENV_FILE"; then
+                sudo sed -i "s|^$key=.*|$key=$val|" "$ENV_FILE"
+              else
+                echo "$key=$val" | sudo tee -a "$ENV_FILE" > /dev/null
+              fi
+            fi
+          }
+          
+          write_kv "DATABASE_URL" "${{ secrets.DATABASE_URL }}"
+          write_kv "DB_USERNAME" "${{ secrets.DB_USERNAME }}"
+          write_kv "DB_PASSWORD" "${{ secrets.DB_PASSWORD }}"
+          write_kv "CLOUDINARY_CLOUD_NAME" "${{ secrets.CLOUDINARY_CLOUD_NAME }}"
+          write_kv "CLOUDINARY_API_KEY" "${{ secrets.CLOUDINARY_API_KEY }}"
+          write_kv "CLOUDINARY_API_SECRET" "${{ secrets.CLOUDINARY_API_SECRET }}"
+          write_kv "PORT" "8080"
+          
+          # 기본값 설정 (Secrets가 없을 경우)
+          if ! sudo grep -q "^DATABASE_URL=" "$ENV_FILE"; then
+            echo "# 데이터베이스 설정" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "DATABASE_URL=jdbc:postgresql://localhost:5432/bulletin" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "DB_USERNAME=postgres" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "DB_PASSWORD=" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "# Cloudinary 설정" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "CLOUDINARY_CLOUD_NAME=" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "CLOUDINARY_API_KEY=" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "CLOUDINARY_API_SECRET=" | sudo tee -a "$ENV_FILE" > /dev/null
           fi
           
-          # 6. 서비스 파일 업데이트 (존재하는 경우)
+          echo -e "${GREEN}✅ .env 파일 설정 완료${NC}"
+          
+          # 5. 서비스 파일 업데이트 (사용자 동적 설정)
           if [ -f /tmp/bulletin.service ]; then
+            # 서비스 파일에서 User/Group을 동적으로 변경
+            sudo sed -i "s|^User=.*|User=$RUN_USER|" /tmp/bulletin.service
+            sudo sed -i "s|^Group=.*|Group=$RUN_USER|" /tmp/bulletin.service
+            sudo sed -i "s|/opt/bulletin/bulletin-0.0.1-SNAPSHOT.jar|/opt/bulletin/app.jar|" /tmp/bulletin.service
             sudo cp /tmp/bulletin.service /etc/systemd/system/bulletin.service
             sudo systemctl daemon-reload
             echo -e "${GREEN}✅ 서비스 파일 업데이트 완료${NC}"
+          else
+            # 서비스 파일이 없으면 생성
+            if [ ! -f /etc/systemd/system/bulletin.service ]; then
+              cat << 'SERVICEEOF' | sudo tee /etc/systemd/system/bulletin.service > /dev/null
+[Unit]
+Description=교회 모바일 주보 시스템
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${RUN_USER}
+Group=${RUN_USER}
+WorkingDirectory=${APP_DIR}
+EnvironmentFile=${APP_DIR}/.env
+Environment="SPRING_PROFILES_ACTIVE=ec2"
+ExecStart=/usr/bin/java -Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar ${APP_DIR}/app.jar
+ExecStop=/bin/kill -15 $MAINPID
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bulletin
+
+# 보안 설정
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=${APP_DIR}/uploads ${APP_DIR}/logs
+
+# 리소스 제한
+LimitNOFILE=65536
+LimitNPROC=4096
+MemoryLimit=2G
+
+[Install]
+WantedBy=multi-user.target
+SERVICEEOF
+              sudo sed -i "s|\${RUN_USER}|$RUN_USER|g" /etc/systemd/system/bulletin.service
+              sudo sed -i "s|\${APP_DIR}|$APP_DIR|g" /etc/systemd/system/bulletin.service
+              sudo systemctl daemon-reload
+              echo -e "${GREEN}✅ 서비스 파일 생성 완료${NC}"
+            fi
           fi
           
-          # 7. 서비스 존재 확인
+          # 6. 서비스 존재 확인
           if [ ! -f /etc/systemd/system/bulletin.service ]; then
             echo -e "${RED}❌ 서비스 파일을 찾을 수 없습니다${NC}"
             exit 1
           fi
           
-          # 8. 서비스 활성화 및 재시작
+          # 7. 서비스 활성화 및 재시작
           sudo systemctl enable $SERVICE_NAME 2>/dev/null || true
           echo -e "${YELLOW}🔄 서비스 재시작 중...${NC}"
           sudo systemctl restart $SERVICE_NAME
           
-          # 9. 서비스 시작 확인 (최대 30초 대기)
+          # 8. 서비스 시작 확인 (최대 30초 대기)
           for i in {1..30}; do
             if sudo systemctl is-active --quiet $SERVICE_NAME; then
               echo -e "${GREEN}✅ 서비스가 정상적으로 시작되었습니다 (${i}초)${NC}"
@@ -160,18 +239,18 @@ jobs:
             fi
             if [ $i -eq 30 ]; then
               echo -e "${RED}❌ 서비스 시작 실패 (타임아웃)${NC}"
-              sudo journalctl -u $SERVICE_NAME -n 20 --no-pager
+              sudo journalctl -u $SERVICE_NAME -n 50 --no-pager
               exit 1
             fi
             sleep 1
           done
           
-          # 10. 최종 상태 확인
+          # 9. 최종 상태 확인
           echo -e "${GREEN}📊 서비스 상태:${NC}"
-          sudo systemctl status $SERVICE_NAME --no-pager | head -20
+          sudo systemctl status $SERVICE_NAME --no-pager | head -30
     
     - name: Verify deployment
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
