@@ -1,0 +1,111 @@
+version: 0.2
+
+# Amazon Linux 2/2023 환경에서 실행
+# CodeBuild 이미지: aws/codebuild/amazonlinux2-x86_64-standard:7.0
+# 또는: aws/codebuild/amazonlinux2023-x86_64-standard:7.0
+
+phases:
+  pre_build:
+    commands:
+      - echo "🔍 운영체제 확인"
+      - cat /etc/os-release
+      - |
+        # Java 17 설치 (없는 경우)
+        if ! command -v java &> /dev/null || ! java -version 2>&1 | grep -q "17"; then
+          echo "📦 Java 17 설치 중..."
+          if [ -f /etc/os-release ] && grep -q "Amazon Linux" /etc/os-release; then
+            # Amazon Linux 2
+            sudo yum update -y
+            sudo yum install -y java-17-amazon-corretto-devel
+          elif [ -f /etc/os-release ] && grep -q "Ubuntu" /etc/os-release; then
+            # Ubuntu
+            sudo apt-get update -y
+            sudo apt-get install -y openjdk-17-jdk
+          else
+            # 기타 (Amazon Linux 2023 등)
+            sudo yum update -y
+            sudo yum install -y java-17-amazon-corretto-devel || sudo dnf install -y java-17-amazon-corretto-devel
+          fi
+          echo "✅ Java 17 설치 완료"
+        else
+          echo "✅ Java 17이 이미 설치되어 있습니다"
+        fi
+      - echo "🔍 Java 버전 확인"
+      - java -version
+      - echo "🔍 JAVA_HOME 설정"
+      - export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
+      - echo "JAVA_HOME=$JAVA_HOME" >> env_vars.txt
+      - echo "🔍 Gradle 버전 확인"
+      - ./gradlew --version
+      
+  build:
+    commands:
+      - echo "🔨 Gradle 빌드 시작..."
+      - chmod +x ./gradlew
+      - ./gradlew clean build -x test --no-daemon
+      
+  post_build:
+    commands:
+      - echo "✅ 빌드 완료"
+      - echo "📦 JAR 파일 확인"
+      - JAR_FILE=$(ls -1 build/libs/*SNAPSHOT*.jar | head -n1)
+      - echo "JAR_FILE=$JAR_FILE" >> env_vars.txt
+      - ls -lh $JAR_FILE
+      - echo "파일 크기: $(du -h $JAR_FILE | cut -f1)"
+      - |
+        # EC2 배포 (환경 변수가 설정된 경우에만)
+        if [ -n "$EC2_HOST" ] && [ -n "$EC2_SSH_KEY" ]; then
+          echo "🚀 EC2 배포 시작..."
+          echo "$EC2_SSH_KEY" > /tmp/ec2_key.pem
+          chmod 600 /tmp/ec2_key.pem
+          
+          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60"
+          USERNAME="${EC2_USERNAME:-ec2-user}"
+          
+          # JAR 파일 전송
+          scp $SSH_OPTS -i /tmp/ec2_key.pem \
+            "$JAR_FILE" \
+            "$USERNAME@$EC2_HOST:/tmp/app.jar" || {
+            echo "❌ 파일 전송 실패"
+            rm -f /tmp/ec2_key.pem
+            exit 1
+          }
+          
+          # 배포 스크립트 실행
+          ssh $SSH_OPTS -i /tmp/ec2_key.pem "$USERNAME@$EC2_HOST" << DEPLOYEOF
+            set -e
+            APP_DIR="/opt/bulletin"
+            SERVICE_NAME="bulletin"
+            RUN_USER="$USERNAME"
+            
+            sudo mkdir -p $APP_DIR/{logs,uploads/bulletin-images,uploads/sheet-music,uploads/small-groups}
+            
+            if [ -f "$APP_DIR/app.jar" ]; then
+              sudo cp "$APP_DIR/app.jar" "$APP_DIR/app.jar.backup.$(date +%s)"
+            fi
+            
+            sudo cp /tmp/app.jar $APP_DIR/app.jar
+            sudo chown -R $RUN_USER:$RUN_USER $APP_DIR
+            
+            if [ -f /etc/systemd/system/$SERVICE_NAME.service ]; then
+              sudo systemctl restart $SERVICE_NAME
+              echo "✅ 서비스 재시작 완료"
+            fi
+            
+            rm -f /tmp/app.jar
+DEPLOYEOF
+          
+          rm -f /tmp/ec2_key.pem
+          echo "✅ 배포 완료"
+        else
+          echo "⚠️ EC2 환경 변수가 설정되지 않았습니다. 아티팩트만 생성합니다."
+        fi
+
+artifacts:
+  files:
+    - 'build/libs/*.jar'
+    - 'bulletin.service'
+    - 'env.template'
+    - 'deploy-ec2.sh'
+  name: bulletin-artifacts
+
