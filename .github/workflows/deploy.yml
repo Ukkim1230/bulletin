@@ -49,7 +49,7 @@ jobs:
         echo "📦 JAR 파일 전송 중..."
         scp $SSH_OPTS -i /tmp/ec2_key.pem \
           build/libs/bulletin-0.0.1-SNAPSHOT.jar \
-          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/ || {
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/bulletin-0.0.1-SNAPSHOT.jar || {
           echo "❌ JAR 파일 전송 실패!"
           rm -f /tmp/ec2_key.pem
           exit 1
@@ -60,7 +60,7 @@ jobs:
           echo "📦 서비스 파일 전송 중..."
           scp $SSH_OPTS -i /tmp/ec2_key.pem \
             bulletin.service \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/ || true
+            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/bulletin.service || true
         fi
         
         rm -f /tmp/ec2_key.pem
@@ -94,7 +94,13 @@ jobs:
           # 1. 디렉토리 생성
           sudo mkdir -p $APP_DIR/{logs,uploads/bulletin-images,uploads/sheet-music,uploads/small-groups}
           
-          # 2. JAR 파일 백업 및 복사
+          # 2. JAR 파일 존재 확인
+          if [ ! -f /tmp/$JAR_FILE ]; then
+            echo -e "${RED}❌ JAR 파일을 찾을 수 없습니다: /tmp/$JAR_FILE${NC}"
+            exit 1
+          fi
+          
+          # 3. JAR 파일 백업 및 복사
           if [ -f "$APP_DIR/$JAR_FILE" ]; then
             sudo cp "$APP_DIR/$JAR_FILE" "$APP_DIR/${JAR_FILE}.backup.$(date +%s)"
             echo -e "${YELLOW}📦 기존 파일 백업 완료${NC}"
@@ -105,10 +111,10 @@ jobs:
           sudo chmod 644 $APP_DIR/$JAR_FILE
           echo -e "${GREEN}✅ JAR 파일 복사 완료${NC}"
           
-          # 3. 파일 소유권 설정
+          # 4. 파일 소유권 설정
           sudo chown -R ec2-user:ec2-user $APP_DIR/uploads $APP_DIR/logs 2>/dev/null || true
           
-          # 4. .env 파일 처리
+          # 5. .env 파일 처리
           if [ ! -f "$APP_DIR/.env" ]; then
             echo -e "${YELLOW}📝 .env 파일 생성 중...${NC}"
             echo "# 데이터베이스 설정" | sudo tee $APP_DIR/.env > /dev/null
@@ -128,25 +134,25 @@ jobs:
             echo -e "${GREEN}✅ .env 파일 생성 완료 (수정 필요!)${NC}"
           fi
           
-          # 5. 서비스 파일 업데이트 (존재하는 경우)
+          # 6. 서비스 파일 업데이트 (존재하는 경우)
           if [ -f /tmp/bulletin.service ]; then
             sudo cp /tmp/bulletin.service /etc/systemd/system/bulletin.service
             sudo systemctl daemon-reload
             echo -e "${GREEN}✅ 서비스 파일 업데이트 완료${NC}"
           fi
           
-          # 6. 서비스 존재 확인
+          # 7. 서비스 존재 확인
           if [ ! -f /etc/systemd/system/bulletin.service ]; then
             echo -e "${RED}❌ 서비스 파일을 찾을 수 없습니다${NC}"
             exit 1
           fi
           
-          # 7. 서비스 활성화 및 재시작
+          # 8. 서비스 활성화 및 재시작
           sudo systemctl enable $SERVICE_NAME 2>/dev/null || true
           echo -e "${YELLOW}🔄 서비스 재시작 중...${NC}"
           sudo systemctl restart $SERVICE_NAME
           
-          # 8. 서비스 시작 확인 (최대 30초 대기)
+          # 9. 서비스 시작 확인 (최대 30초 대기)
           for i in {1..30}; do
             if sudo systemctl is-active --quiet $SERVICE_NAME; then
               echo -e "${GREEN}✅ 서비스가 정상적으로 시작되었습니다 (${i}초)${NC}"
@@ -160,7 +166,7 @@ jobs:
             sleep 1
           done
           
-          # 9. 최종 상태 확인
+          # 10. 최종 상태 확인
           echo -e "${GREEN}📊 서비스 상태:${NC}"
           sudo systemctl status $SERVICE_NAME --no-pager | head -20
     
