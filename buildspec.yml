@@ -35,13 +35,14 @@ phases:
       - echo "🔍 JAVA_HOME 설정"
       - export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
       - echo "JAVA_HOME=$JAVA_HOME" >> env_vars.txt
+      - echo "🔍 Gradle 실행 권한 설정"
+      - chmod +x ./gradlew
       - echo "🔍 Gradle 버전 확인"
       - ./gradlew --version
       
   build:
     commands:
       - echo "🔨 Gradle 빌드 시작..."
-      - chmod +x ./gradlew
       - ./gradlew clean build -x test --no-daemon
       
   post_build:
