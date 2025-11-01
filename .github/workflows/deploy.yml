@@ -81,20 +81,18 @@ jobs:
           # 4. .env 파일 처리
           if [ ! -f "$APP_DIR/.env" ]; then
             echo -e "${YELLOW}📝 .env 파일 생성 중...${NC}"
-            cat << 'ENVEOF' | sudo tee $APP_DIR/.env > /dev/null
-# 데이터베이스 설정
-DATABASE_URL=jdbc:postgresql://localhost:5432/bulletin
-DB_USERNAME=postgres
-DB_PASSWORD=your_password_here
-
-# Cloudinary 설정
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# 애플리케이션 설정
-PORT=8080
-ENVEOF
+            echo "# 데이터베이스 설정" | sudo tee $APP_DIR/.env > /dev/null
+            echo "DATABASE_URL=jdbc:postgresql://localhost:5432/bulletin" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "DB_USERNAME=postgres" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "DB_PASSWORD=your_password_here" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "# Cloudinary 설정" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "CLOUDINARY_CLOUD_NAME=your_cloud_name" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "CLOUDINARY_API_KEY=your_api_key" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "CLOUDINARY_API_SECRET=your_api_secret" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "# 애플리케이션 설정" | sudo tee -a $APP_DIR/.env > /dev/null
+            echo "PORT=8080" | sudo tee -a $APP_DIR/.env > /dev/null
             sudo chown ec2-user:ec2-user $APP_DIR/.env
             sudo chmod 600 $APP_DIR/.env
             echo -e "${GREEN}✅ .env 파일 생성 완료 (수정 필요!)${NC}"
