@@ -62,37 +62,68 @@ jobs:
         echo "$SSH_KEY" > /tmp/ec2_key.pem
         chmod 600 /tmp/ec2_key.pem
         
-        SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=5 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -v"
-        
-        # SSH 연결 테스트
+        # SSH 연결 테스트 (재시도 로직 포함)
         echo "🔍 SSH 연결 테스트 중..."
-        ssh $SSH_OPTS -i /tmp/ec2_key.pem -o BatchMode=yes "$USERNAME@$HOST" "echo 'SSH 연결 성공'" || {
-          echo "❌ SSH 연결 실패!"
+        SSH_OPTS_TEST="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o ServerAliveInterval=15 -o ServerAliveCountMax=6 -o TCPKeepAlive=yes"
+        
+        MAX_SSH_RETRIES=5
+        SSH_RETRY_COUNT=0
+        SSH_SUCCESS=false
+        
+        while [ $SSH_RETRY_COUNT -lt $MAX_SSH_RETRIES ]; do
+          echo "SSH 연결 시도 $((SSH_RETRY_COUNT + 1))/$MAX_SSH_RETRIES..."
+          if timeout 90 ssh $SSH_OPTS_TEST -i /tmp/ec2_key.pem -o BatchMode=yes "$USERNAME@$HOST" "echo 'SSH 연결 성공'" 2>&1; then
+            echo "✅ SSH 연결 성공!"
+            SSH_SUCCESS=true
+            break
+          else
+            SSH_RETRY_COUNT=$((SSH_RETRY_COUNT + 1))
+            echo "⚠️ SSH 연결 실패 (시도 $SSH_RETRY_COUNT/$MAX_SSH_RETRIES)"
+            if [ $SSH_RETRY_COUNT -lt $MAX_SSH_RETRIES ]; then
+              echo "10초 후 재시도..."
+              sleep 10
+            fi
+          fi
+        done
+        
+        if [ "$SSH_SUCCESS" = false ]; then
+          echo "❌ SSH 연결 실패 (모든 재시도 실패)!"
           echo "디버깅 정보:"
           echo "- 호스트: $HOST"
           echo "- 사용자: $USERNAME"
           echo "- SSH 키 파일 존재: $(test -f /tmp/ec2_key.pem && echo '예' || echo '아니오')"
+          echo "- SSH 키 파일 권한: $(ls -l /tmp/ec2_key.pem | awk '{print $1}')"
+          echo ""
+          echo "💡 가능한 원인:"
+          echo "1. EC2 인스턴스의 SSH 서비스가 응답하지 않음"
+          echo "2. 인스턴스 리소스 부족 (CPU/메모리)"
+          echo "3. 네트워크 보안 그룹 설정 문제"
+          echo ""
+          echo "확인 방법:"
+          echo "- AWS Console → EC2 → 인스턴스 → '연결' 버튼으로 EC2 Instance Connect 시도"
+          echo "- 인스턴스 상태 및 상태 검사 확인"
           rm -f /tmp/ec2_key.pem
           exit 1
-        }
+        fi
         
         # JAR 파일 전송 (재시도 로직)
         echo "📦 JAR 파일 전송 중..."
-        SSH_OPTS_SCP="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=3"
+        SSH_OPTS_SCP="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o ServerAliveInterval=15 -o ServerAliveCountMax=6 -o TCPKeepAlive=yes"
         
         MAX_RETRIES=3
         RETRY_COUNT=0
         while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-          if scp $SSH_OPTS_SCP -i /tmp/ec2_key.pem \
+          echo "JAR 파일 전송 시도 $((RETRY_COUNT + 1))/$MAX_RETRIES..."
+          if timeout 120 scp $SSH_OPTS_SCP -i /tmp/ec2_key.pem \
             "${{ steps.jar.outputs.jar }}" \
-            "$USERNAME@$HOST:/tmp/app.jar"; then
+            "$USERNAME@$HOST:/tmp/app.jar" 2>&1; then
             echo "✅ JAR 파일 전송 성공"
             break
           else
             RETRY_COUNT=$((RETRY_COUNT + 1))
             echo "⚠️ 전송 실패 (시도 $RETRY_COUNT/$MAX_RETRIES)"
             if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-              sleep 5
+              sleep 10
             else
               echo "❌ JAR 파일 전송 실패 (모든 재시도 실패)"
               rm -f /tmp/ec2_key.pem
