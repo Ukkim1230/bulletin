@@ -72,28 +72,21 @@ phases:
           }
           
           # 배포 스크립트 실행
-          ssh $SSH_OPTS -i /tmp/ec2_key.pem "$USERNAME@$EC2_HOST" << DEPLOYEOF
-            set -e
-            APP_DIR="/opt/bulletin"
-            SERVICE_NAME="bulletin"
-            RUN_USER="$USERNAME"
-            
-            sudo mkdir -p $APP_DIR/{logs,uploads/bulletin-images,uploads/sheet-music,uploads/small-groups}
-            
-            if [ -f "$APP_DIR/app.jar" ]; then
-              sudo cp "$APP_DIR/app.jar" "$APP_DIR/app.jar.backup.$(date +%s)"
-            fi
-            
-            sudo cp /tmp/app.jar $APP_DIR/app.jar
-            sudo chown -R $RUN_USER:$RUN_USER $APP_DIR
-            
-            if [ -f /etc/systemd/system/$SERVICE_NAME.service ]; then
-              sudo systemctl restart $SERVICE_NAME
-              echo "✅ 서비스 재시작 완료"
-            fi
-            
-            rm -f /tmp/app.jar
-DEPLOYEOF
+          ssh $SSH_OPTS -i /tmp/ec2_key.pem "$USERNAME@$EC2_HOST" "set -e && \
+            APP_DIR=\"/opt/bulletin\" && \
+            SERVICE_NAME=\"bulletin\" && \
+            RUN_USER=\"$USERNAME\" && \
+            sudo mkdir -p \$APP_DIR/{logs,uploads/bulletin-images,uploads/sheet-music,uploads/small-groups} && \
+            if [ -f \"\$APP_DIR/app.jar\" ]; then \
+              sudo cp \"\$APP_DIR/app.jar\" \"\$APP_DIR/app.jar.backup.\$(date +%s)\"; \
+            fi && \
+            sudo cp /tmp/app.jar \$APP_DIR/app.jar && \
+            sudo chown -R \$RUN_USER:\$RUN_USER \$APP_DIR && \
+            if [ -f /etc/systemd/system/\$SERVICE_NAME.service ]; then \
+              sudo systemctl restart \$SERVICE_NAME && \
+              echo \"✅ 서비스 재시작 완료\"; \
+            fi && \
+            rm -f /tmp/app.jar"
           
           rm -f /tmp/ec2_key.pem
           echo "✅ 배포 완료"
