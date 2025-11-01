@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- 주보 뷰어 -->
+    <div th:fragment="bulletin-viewer" id="bulletinViewer" class="bulletin-viewer" style="display: none;">
+        <button class="bulletin-home-btn" onclick="closeBulletinViewer()">
+            <i class="fas fa-home"></i>
+        </button>
+        
+        <button class="bulletin-edit-btn" onclick="openEditDialog()">
+            <i class="fas fa-edit"></i>
+        </button>
+        
+        <button class="bulletin-add-btn" onclick="openAddPageDialog()">
+            <i class="fas fa-plus"></i>
+        </button>
+        
+        <button class="bulletin-delete-btn" onclick="deleteCurrentPage()">
+            <i class="fas fa-trash"></i>
+        </button>
+        
+        <div class="bulletin-page-indicator">
+            <span id="currentPageNum">1</span> / <span id="totalPageNum">4</span>
+        </div>
+        
+        <div class="bulletin-container" id="bulletinContainer">
+            <img id="bulletinImage" src="" alt="주보 페이지" class="bulletin-image">
+        </div>
+        
+        <button class="bulletin-nav-btn bulletin-prev-btn" id="prevBtn" onclick="goToPrevPage()">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <button class="bulletin-nav-btn bulletin-next-btn" id="nextBtn" onclick="goToNextPage()">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        
+        <div class="bulletin-dots">
+            <button class="bulletin-dot" onclick="goToPage(0)"></button>
+            <button class="bulletin-dot" onclick="goToPage(1)"></button>
+            <button class="bulletin-dot" onclick="goToPage(2)"></button>
+            <button class="bulletin-dot" onclick="goToPage(3)"></button>
+        </div>
+        
+        <!-- 하단 네비게이션 -->
+        <th:block th:replace="~{fragments/bottom-nav :: bottom-nav}"></th:block>
+    </div>
+
+    <!-- 주보 편집 모달들 -->
+    <div th:fragment="bulletin-modals">
+        <!-- 편집 모달 -->
+        <div id="editDialog" class="edit-dialog" style="display: none;">
+            <div class="edit-dialog-overlay" onclick="closeEditDialog()"></div>
+            <div class="edit-dialog-content">
+                <div class="edit-dialog-header">
+                    <h3 class="edit-dialog-title"><span id="editPageNum">1</span>페이지 편집</h3>
+                    <p class="edit-dialog-description">이미지 URL과 설명을 수정할 수 있습니다.</p>
+                </div>
+                
+                <div class="edit-dialog-body">
+                    <div class="form-group">
+                        <label for="editImageUrl" class="form-label">이미지 URL</label>
+                        <input type="text" id="editImageUrl" class="form-input" placeholder="https://example.com/image.jpg">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">또는 이미지 업로드</label>
+                        <div class="upload-area">
+                            <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-outline upload-btn" onclick="document.getElementById('imageFileInput').click()">
+                                <i class="fas fa-upload"></i> 파일 선택
+                            </button>
+                            <span id="uploadFileName" class="upload-file-name"></span>
+                            <div id="uploadProgress" class="upload-progress" style="display: none;">
+                                <div class="upload-progress-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editAlt" class="form-label">이미지 설명</label>
+                        <input type="text" id="editAlt" class="form-input" placeholder="이미지 설명을 입력하세요">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">미리보기</label>
+                        <div class="preview-container">
+                            <img id="previewImage" src="" alt="미리보기" class="preview-image">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="edit-dialog-footer">
+                    <button class="btn btn-outline" onclick="closeEditDialog()">취소</button>
+                    <button class="btn btn-primary" onclick="saveEdit()">저장</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 페이지 추가 모달 -->
+        <div id="addPageDialog" class="edit-dialog" style="display: none;">
+            <div class="edit-dialog-overlay" onclick="closeAddPageDialog()"></div>
+            <div class="edit-dialog-content">
+                <div class="edit-dialog-header">
+                    <h3 class="edit-dialog-title">새 페이지 추가</h3>
+                    <p class="edit-dialog-description">새로운 주보 페이지를 추가합니다.</p>
+                </div>
+                
+                <div class="edit-dialog-body">
+                    <div class="form-group">
+                        <label for="addPageNumber" class="form-label">페이지 번호</label>
+                        <input type="number" id="addPageNumber" class="form-input" placeholder="1" min="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addImageUrl" class="form-label">이미지 URL</label>
+                        <input type="text" id="addImageUrl" class="form-input" placeholder="https://example.com/image.jpg">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">또는 이미지 업로드</label>
+                        <div class="upload-area">
+                            <input type="file" id="addImageFileInput" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-outline upload-btn" onclick="document.getElementById('addImageFileInput').click()">
+                                <i class="fas fa-upload"></i> 파일 선택
+                            </button>
+                            <span id="addUploadFileName" class="upload-file-name"></span>
+                            <div id="addUploadProgress" class="upload-progress" style="display: none;">
+                                <div class="upload-progress-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addAlt" class="form-label">이미지 설명</label>
+                        <input type="text" id="addAlt" class="form-input" placeholder="이미지 설명을 입력하세요">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">미리보기</label>
+                        <div class="preview-container">
+                            <img id="addPreviewImage" src="" alt="미리보기" class="preview-image" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="edit-dialog-footer">
+                    <button class="btn btn-outline" onclick="closeAddPageDialog()">취소</button>
+                    <button class="btn btn-primary" onclick="saveNewPage()">추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 주보 뷰어 스타일 -->
+    <style th:fragment="bulletin-styles">
+        .bulletin-viewer {
+            position: fixed;
+            inset: 0;
+            background: var(--background);
+            z-index: 9999;
+            padding-bottom: 64px;
+        }
+        
+        .bulletin-home-btn, .bulletin-edit-btn, .bulletin-add-btn, .bulletin-delete-btn {
+            position: absolute;
+            top: 1rem;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .bulletin-home-btn {
+            left: 1rem;
+        }
+        
+        .bulletin-edit-btn {
+            left: 4rem;
+        }
+        
+        .bulletin-add-btn {
+            left: 7rem;
+            background: rgba(102, 126, 234, 0.9);
+        }
+        
+        .bulletin-delete-btn {
+            left: 10rem;
+            background: rgba(239, 68, 68, 0.9);
+        }
+        
+        .bulletin-home-btn:hover, .bulletin-edit-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .bulletin-add-btn:hover {
+            background: rgba(102, 126, 234, 1);
+        }
+        
+        .bulletin-delete-btn:hover {
+            background: rgba(239, 68, 68, 1);
+        }
+        
+        .bulletin-home-btn i, .bulletin-edit-btn i {
+            font-size: 1.25rem;
+            color: var(--foreground);
+        }
+        
+        .bulletin-add-btn i, .bulletin-delete-btn i {
+            font-size: 1.25rem;
+            color: white;
+        }
+        
+        .bulletin-page-indicator {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .bulletin-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .bulletin-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            user-select: none;
+        }
+        
+        .bulletin-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .bulletin-nav-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .bulletin-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .bulletin-prev-btn {
+            left: 0.5rem;
+        }
+        
+        .bulletin-next-btn {
+            right: 0.5rem;
+        }
+        
+        .bulletin-nav-btn i {
+            font-size: 1.25rem;
+            color: var(--foreground);
+        }
+        
+        .bulletin-dots {
+            position: absolute;
+            bottom: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        
+        .bulletin-viewer .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border);
+        }
+        
+        .bulletin-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 9999px;
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+        }
+        
+        .bulletin-dot:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .bulletin-dot.active {
+            background: var(--primary);
+            width: 32px;
+        }
+        
+        /* 편집 모달 스타일 */
+        .edit-dialog {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .edit-dialog-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .edit-dialog-content {
+            position: relative;
+            background: var(--card);
+            border-radius: 0.75rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 32rem;
+            width: calc(100% - 2rem);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .edit-dialog-header {
+            padding: 1.5rem 1.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .edit-dialog-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            color: var(--foreground);
+        }
+        
+        .edit-dialog-description {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+            margin: 0;
+        }
+        
+        .edit-dialog-body {
+            padding: 1.5rem;
+        }
+        
+        .edit-dialog-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--foreground);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            color: var(--foreground);
+            background: var(--background);
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            background: var(--background);
+            color: var(--foreground);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.875rem;
+        }
+        
+        .upload-btn:hover {
+            background: var(--accent);
+        }
+        
+        .upload-file-name {
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+        
+        .upload-progress {
+            width: 100%;
+            height: 8px;
+            background: var(--muted);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        
+        .upload-progress-bar {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+        
+        .preview-container {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            overflow: hidden;
+            background: var(--muted);
+        }
+        
+        .preview-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--foreground);
+        }
+        
+        .btn-outline:hover {
+            background: var(--accent);
+        }
+    </style>
+
+    <!-- 주보 뷰어 스크립트 -->
+    <script th:fragment="bulletin-scripts">
+        // 전역 변수 (중복 방지)
+        if (typeof window.bulletinPages === 'undefined') {
+            window.bulletinPages = [];
+            window.currentPage = 0;
+            window.touchStartX = 0;
+            window.touchEndX = 0;
+            window.minSwipeDistance = 50;
+        }
+        
+        // API에서 주보 페이지 데이터 로드
+        window.loadBulletinPages = async function() {
+            try {
+                const response = await fetch('/api/bulletin-pages');
+                const data = await response.json();
+                window.bulletinPages = data.map(page => ({
+                    id: page.id,
+                    image: page.imageUrl,
+                    alt: page.alt
+                }));
+                return true;
+            } catch (error) {
+                console.error('주보 페이지 로드 실패:', error);
+                alert('주보 페이지를 불러오는데 실패했습니다.');
+                return false;
+            }
+        };
+        
+        window.openBulletinViewer = async function() {
+            // 데이터가 없으면 API에서 로드
+            if (window.bulletinPages.length === 0) {
+                const loaded = await window.loadBulletinPages();
+                if (!loaded) return;
+            }
+            
+            document.getElementById('bulletinViewer').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            window.goToPage(0);
+        };
+        
+        window.closeBulletinViewer = function() {
+            document.getElementById('bulletinViewer').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        };
+        
+        window.goToPage = function(pageIndex) {
+            window.currentPage = pageIndex;
+            
+            if (window.bulletinPages.length === 0) return;
+            
+            // 페이지 범위 체크
+            if (window.currentPage < 0) window.currentPage = 0;
+            if (window.currentPage >= window.bulletinPages.length) window.currentPage = window.bulletinPages.length - 1;
+            
+            // 이미지 업데이트
+            const img = document.getElementById('bulletinImage');
+            if (img && window.bulletinPages[window.currentPage]) {
+                img.src = window.bulletinPages[window.currentPage].image;
+                img.alt = window.bulletinPages[window.currentPage].alt;
+            }
+            
+            // 페이지 번호 업데이트
+            const currentPageNum = document.getElementById('currentPageNum');
+            const totalPageNum = document.getElementById('totalPageNum');
+            if (currentPageNum) currentPageNum.textContent = window.currentPage + 1;
+            if (totalPageNum) totalPageNum.textContent = window.bulletinPages.length;
+            
+            // 네비게이션 버튼 업데이트
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            if (prevBtn) prevBtn.disabled = window.currentPage === 0;
+            if (nextBtn) nextBtn.disabled = window.currentPage === window.bulletinPages.length - 1;
+            
+            // 페이지 점 업데이트
+            window.updateDots();
+        };
+        
+        window.updateDots = function() {
+            const dotsContainer = document.querySelector('.bulletin-dots');
+            if (!dotsContainer) return;
+            
+            // 기존 점들 제거
+            dotsContainer.innerHTML = '';
+            
+            // 새 점들 생성
+            window.bulletinPages.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.className = 'bulletin-dot' + (index === window.currentPage ? ' active' : '');
+                dot.onclick = () => window.goToPage(index);
+                dotsContainer.appendChild(dot);
+            });
+        };
+        
+        window.goToPrevPage = function() {
+            if (window.currentPage > 0) {
+                window.goToPage(window.currentPage - 1);
+            }
+        };
+        
+        window.goToNextPage = function() {
+            if (window.currentPage < window.bulletinPages.length - 1) {
+                window.goToPage(window.currentPage + 1);
+            }
+        };
+        
+        // 편집 모달
+        window.openEditDialog = function() {
+            const editDialog = document.getElementById('editDialog');
+            const editPageNum = document.getElementById('editPageNum');
+            const editImageUrl = document.getElementById('editImageUrl');
+            const editAlt = document.getElementById('editAlt');
+            const previewImage = document.getElementById('previewImage');
+            
+            if (!editDialog || !editImageUrl) {
+                console.error('편집 모달 요소를 찾을 수 없습니다.');
+                return;
+            }
+            
+            const currentPageData = window.bulletinPages[window.currentPage];
+            if (editPageNum) editPageNum.textContent = window.currentPage + 1;
+            editImageUrl.value = currentPageData.image;
+            if (editAlt) editAlt.value = currentPageData.alt;
+            if (previewImage) previewImage.src = currentPageData.image;
+            editDialog.style.display = 'flex';
+        };
+        
+        window.closeEditDialog = function() {
+            const editDialog = document.getElementById('editDialog');
+            if (editDialog) editDialog.style.display = 'none';
+        };
+        
+        window.saveEdit = async function() {
+            const editImageUrl = document.getElementById('editImageUrl');
+            const editAlt = document.getElementById('editAlt');
+            
+            if (!editImageUrl) {
+                console.error('편집 모달 요소를 찾을 수 없습니다.');
+                return;
+            }
+            
+            const newImageUrl = editImageUrl.value;
+            const newAlt = editAlt ? editAlt.value : '';
+            
+            if (!newImageUrl) {
+                alert('이미지 URL을 입력해주세요.');
+                return;
+            }
+            
+            const pageId = window.bulletinPages[window.currentPage].id;
+            
+            try {
+                const response = await fetch(`/api/bulletin-pages/${pageId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pageNumber: window.currentPage + 1,
+                        imageUrl: newImageUrl,
+                        alt: newAlt
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('저장 실패');
+                }
+                
+                const updatedPage = await response.json();
+                
+                // 로컬 데이터 업데이트
+                window.bulletinPages[window.currentPage].image = updatedPage.imageUrl;
+                window.bulletinPages[window.currentPage].alt = updatedPage.alt;
+                
+                window.goToPage(window.currentPage);
+                window.closeEditDialog();
+                
+                alert('페이지가 수정되었습니다!');
+            } catch (error) {
+                console.error('페이지 저장 실패:', error);
+                alert('페이지 저장에 실패했습니다.');
+            }
+        };
+        
+        // 페이지 추가 모달
+        window.openAddPageDialog = function() {
+            const addPageDialog = document.getElementById('addPageDialog');
+            const addPageNumber = document.getElementById('addPageNumber');
+            const addImageUrl = document.getElementById('addImageUrl');
+            const addAlt = document.getElementById('addAlt');
+            const addPreviewImage = document.getElementById('addPreviewImage');
+            
+            if (!addPageDialog || !addPageNumber) {
+                console.error('추가 모달 요소를 찾을 수 없습니다.');
+                return;
+            }
+            
+            const nextPageNumber = window.bulletinPages.length + 1;
+            addPageNumber.value = nextPageNumber;
+            if (addImageUrl) addImageUrl.value = '';
+            if (addAlt) addAlt.value = '';
+            if (addPreviewImage) addPreviewImage.style.display = 'none';
+            addPageDialog.style.display = 'flex';
+        };
+        
+        window.closeAddPageDialog = function() {
+            const addPageDialog = document.getElementById('addPageDialog');
+            if (addPageDialog) addPageDialog.style.display = 'none';
+        };
+        
+        window.saveNewPage = async function() {
+            const addPageNumber = document.getElementById('addPageNumber');
+            const addImageUrl = document.getElementById('addImageUrl');
+            const addAlt = document.getElementById('addAlt');
+            
+            if (!addPageNumber || !addImageUrl) {
+                console.error('추가 모달 요소를 찾을 수 없습니다.');
+                return;
+            }
+            
+            const pageNumber = parseInt(addPageNumber.value);
+            const imageUrl = addImageUrl.value;
+            const alt = addAlt ? addAlt.value : '';
+            
+            if (!pageNumber || pageNumber < 1) {
+                alert('페이지 번호를 입력해주세요.');
+                return;
+            }
+            
+            if (!imageUrl) {
+                alert('이미지 URL을 입력해주세요.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/bulletin-pages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pageNumber: pageNumber,
+                        imageUrl: imageUrl,
+                        alt: alt
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('저장 실패');
+                }
+                
+                // 페이지 목록 새로고침
+                window.bulletinPages = [];
+                await window.loadBulletinPages();
+                
+                // 점 표시 업데이트
+                window.updateDots();
+                
+                // 새로 추가된 페이지로 이동
+                window.goToPage(window.bulletinPages.length - 1);
+                window.closeAddPageDialog();
+                
+                alert('새 페이지가 추가되었습니다!');
+            } catch (error) {
+                console.error('페이지 추가 실패:', error);
+                alert('페이지 추가에 실패했습니다.');
+            }
+        };
+        
+        // 페이지 삭제
+        window.deleteCurrentPage = async function() {
+            if (window.bulletinPages.length <= 1) {
+                alert('최소 1개의 페이지는 필요합니다.');
+                return;
+            }
+            
+            if (!confirm(`${window.currentPage + 1}페이지를 삭제하시겠습니까?`)) {
+                return;
+            }
+            
+            const pageId = window.bulletinPages[window.currentPage].id;
+            
+            try {
+                const response = await fetch(`/api/bulletin-pages/${pageId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('삭제 실패');
+                }
+                
+                // 페이지 목록 새로고침
+                window.bulletinPages = [];
+                await window.loadBulletinPages();
+                
+                // 점 표시 업데이트
+                window.updateDots();
+                
+                // 이전 페이지로 이동 (현재 페이지가 마지막이면)
+                const newPage = window.currentPage >= window.bulletinPages.length ? window.bulletinPages.length - 1 : window.currentPage;
+                window.goToPage(newPage);
+                
+                alert('페이지가 삭제되었습니다!');
+            } catch (error) {
+                console.error('페이지 삭제 실패:', error);
+                alert('페이지 삭제에 실패했습니다.');
+            }
+        };
+        
+        // 파일 업로드 이벤트 리스너 (중복 방지)
+        if (!window.bulletinFileUploadInitialized) {
+            window.bulletinFileUploadInitialized = true;
+            
+            // 편집 모달 파일 업로드
+            document.addEventListener('DOMContentLoaded', function() {
+                const imageFileInput = document.getElementById('imageFileInput');
+                if (imageFileInput) {
+                    imageFileInput.addEventListener('change', async function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const uploadFileName = document.getElementById('uploadFileName');
+                            if (uploadFileName) uploadFileName.textContent = file.name;
+                            
+                            const imageUrl = await uploadImageFile(file, 'uploadProgress');
+                            if (imageUrl) {
+                                const editImageUrl = document.getElementById('editImageUrl');
+                                const previewImage = document.getElementById('previewImage');
+                                if (editImageUrl) editImageUrl.value = imageUrl;
+                                if (previewImage) previewImage.src = imageUrl;
+                            }
+                        }
+                    });
+                }
+                
+                // 추가 모달 파일 업로드
+                const addImageFileInput = document.getElementById('addImageFileInput');
+                if (addImageFileInput) {
+                    addImageFileInput.addEventListener('change', async function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const addUploadFileName = document.getElementById('addUploadFileName');
+                            if (addUploadFileName) addUploadFileName.textContent = file.name;
+                            
+                            const imageUrl = await uploadImageFile(file, 'addUploadProgress');
+                            if (imageUrl) {
+                                const addImageUrl = document.getElementById('addImageUrl');
+                                const addPreviewImage = document.getElementById('addPreviewImage');
+                                if (addImageUrl) addImageUrl.value = imageUrl;
+                                if (addPreviewImage) {
+                                    addPreviewImage.src = imageUrl;
+                                    addPreviewImage.style.display = 'block';
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // URL 입력 미리보기
+                const editImageUrlInput = document.getElementById('editImageUrl');
+                if (editImageUrlInput) {
+                    editImageUrlInput.addEventListener('input', function(e) {
+                        const url = e.target.value;
+                        const previewImage = document.getElementById('previewImage');
+                        if (url && previewImage) {
+                            previewImage.src = url;
+                        }
+                    });
+                }
+                
+                const addImageUrlInput = document.getElementById('addImageUrl');
+                if (addImageUrlInput) {
+                    addImageUrlInput.addEventListener('input', function(e) {
+                        const url = e.target.value;
+                        const addPreviewImage = document.getElementById('addPreviewImage');
+                        if (url && addPreviewImage) {
+                            addPreviewImage.src = url;
+                            addPreviewImage.style.display = 'block';
+                        }
+                    });
+                }
+            });
+        }
+        
+        // 파일 업로드 함수
+        async function uploadImageFile(file, progressId) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const progressContainer = document.getElementById(progressId);
+            const progressBar = progressContainer ? progressContainer.querySelector('.upload-progress-bar') : null;
+            
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+                if (progressBar) progressBar.style.width = '0%';
+            }
+            
+            try {
+                // 프로그레스 바 애니메이션
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    if (progress >= 90) {
+                        clearInterval(progressInterval);
+                    }
+                    if (progressBar) progressBar.style.width = progress + '%';
+                }, 100);
+                
+                const response = await fetch('/api/bulletin-pages/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                clearInterval(progressInterval);
+                if (progressBar) progressBar.style.width = '100%';
+                
+                if (!response.ok) {
+                    throw new Error('업로드 실패');
+                }
+                
+                const data = await response.json();
+                
+                setTimeout(() => {
+                    if (progressContainer) progressContainer.style.display = 'none';
+                }, 500);
+                
+                return data.imageUrl;
+            } catch (error) {
+                console.error('이미지 업로드 실패:', error);
+                alert('이미지 업로드에 실패했습니다.');
+                if (progressContainer) progressContainer.style.display = 'none';
+                return null;
+            }
+        }
+        
+        // 터치 스와이프 이벤트 (중복 방지)
+        if (!window.bulletinSwipeInitialized) {
+            window.bulletinSwipeInitialized = true;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const bulletinContainer = document.getElementById('bulletinContainer');
+                if (bulletinContainer) {
+                    bulletinContainer.addEventListener('touchstart', (e) => {
+                        window.touchStartX = e.changedTouches[0].screenX;
+                    });
+                    
+                    bulletinContainer.addEventListener('touchend', (e) => {
+                        window.touchEndX = e.changedTouches[0].screenX;
+                        const swipeDistance = window.touchEndX - window.touchStartX;
+                        
+                        if (Math.abs(swipeDistance) < window.minSwipeDistance) return;
+                        
+                        if (swipeDistance > 0) {
+                            window.goToPrevPage();
+                        } else {
+                            window.goToNextPage();
+                        }
+                    });
+                }
+            });
+        }
+        
+        // 키보드 네비게이션 (중복 방지)
+        if (!window.bulletinKeyboardInitialized) {
+            window.bulletinKeyboardInitialized = true;
+            
+            document.addEventListener('keydown', (e) => {
+                const viewer = document.getElementById('bulletinViewer');
+                if (viewer && viewer.style.display === 'block') {
+                    if (e.key === 'ArrowLeft') window.goToPrevPage();
+                    if (e.key === 'ArrowRight') window.goToNextPage();
+                    if (e.key === 'Escape') window.closeBulletinViewer();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

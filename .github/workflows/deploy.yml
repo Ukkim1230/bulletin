@@ -229,6 +229,16 @@ jobs:
             echo "CLOUDINARY_CLOUD_NAME=" | sudo tee -a "$ENV_FILE" > /dev/null
             echo "CLOUDINARY_API_KEY=" | sudo tee -a "$ENV_FILE" > /dev/null
             echo "CLOUDINARY_API_SECRET=" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "# 애플리케이션 설정" | sudo tee -a "$ENV_FILE" > /dev/null
+            echo "APP_URL=https://hjcb.duckdns.org" | sudo tee -a "$ENV_FILE" > /dev/null
+          fi
+          
+          # APP_URL 설정 업데이트 (기존 설정이 있어도 올바른 값으로 업데이트)
+          if sudo grep -q "^APP_URL=" "$ENV_FILE"; then
+            sudo sed -i 's|^APP_URL=.*|APP_URL=https://hjcb.duckdns.org|' "$ENV_FILE"
+          else
+            echo "APP_URL=https://hjcb.duckdns.org" | sudo tee -a "$ENV_FILE" > /dev/null
           fi
           
           echo -e "${GREEN}✅ .env 파일 설정 완료${NC}"

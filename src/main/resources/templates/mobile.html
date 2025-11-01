@@ -21,6 +21,7 @@
     
     <!-- 공통 스타일 -->
     <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-styles}"></th:block>
 
     <script>
         // QR 모달 관련 함수
@@ -586,100 +587,8 @@
     <th:block th:replace="~{fragments/bottom-nav :: refresh-btn}"></th:block>
 
     <!-- 주보 뷰어 -->
-    <div id="bulletinViewer" class="bulletin-viewer" style="display: none;">
-        <button class="bulletin-home-btn" onclick="closeBulletinViewer()">
-            <i class="fas fa-home"></i>
-        </button>
-        
-        <button class="bulletin-edit-btn" onclick="openEditDialog()">
-            <i class="fas fa-edit"></i>
-        </button>
-        
-        <button class="bulletin-add-btn" onclick="openAddPageDialog()">
-            <i class="fas fa-plus"></i>
-        </button>
-        
-        <button class="bulletin-delete-btn" onclick="deleteCurrentPage()">
-            <i class="fas fa-trash"></i>
-        </button>
-        
-        <div class="bulletin-page-indicator">
-            <span id="currentPageNum">1</span> / <span id="totalPageNum">4</span>
-        </div>
-        
-        <div class="bulletin-container" id="bulletinContainer">
-            <img id="bulletinImage" src="" alt="주보 페이지" class="bulletin-image">
-        </div>
-        
-        <button class="bulletin-nav-btn bulletin-prev-btn" id="prevBtn" onclick="goToPrevPage()">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-        
-        <button class="bulletin-nav-btn bulletin-next-btn" id="nextBtn" onclick="goToNextPage()">
-            <i class="fas fa-chevron-right"></i>
-        </button>
-        
-        <div class="bulletin-dots">
-            <button class="bulletin-dot" onclick="goToPage(0)"></button>
-            <button class="bulletin-dot" onclick="goToPage(1)"></button>
-            <button class="bulletin-dot" onclick="goToPage(2)"></button>
-            <button class="bulletin-dot" onclick="goToPage(3)"></button>
-        </div>
-    </div>
-
-    <!-- 페이지 추가 모달 -->
-    <div id="addPageDialog" class="edit-dialog" style="display: none;">
-        <div class="edit-dialog-overlay" onclick="closeAddPageDialog()"></div>
-        <div class="edit-dialog-content">
-            <div class="edit-dialog-header">
-                <h3 class="edit-dialog-title">새 페이지 추가</h3>
-                <p class="edit-dialog-description">새로운 주보 페이지를 추가합니다.</p>
-            </div>
-            
-            <div class="edit-dialog-body">
-                <div class="form-group">
-                    <label for="addPageNumber" class="form-label">페이지 번호</label>
-                    <input type="number" id="addPageNumber" class="form-input" placeholder="1" min="1">
-                </div>
-                
-                <div class="form-group">
-                    <label for="addImageUrl" class="form-label">이미지 URL</label>
-                    <input type="text" id="addImageUrl" class="form-input" placeholder="https://example.com/image.jpg">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">또는 이미지 업로드</label>
-                    <div class="upload-area">
-                        <input type="file" id="addImageFileInput" accept="image/*" style="display: none;">
-                        <button type="button" class="btn btn-outline upload-btn" onclick="document.getElementById('addImageFileInput').click()">
-                            <i class="fas fa-upload"></i> 파일 선택
-                        </button>
-                        <span id="addUploadFileName" class="upload-file-name"></span>
-                        <div id="addUploadProgress" class="upload-progress" style="display: none;">
-                            <div class="upload-progress-bar"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="addAlt" class="form-label">이미지 설명</label>
-                    <input type="text" id="addAlt" class="form-input" placeholder="이미지 설명을 입력하세요">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">미리보기</label>
-                    <div class="preview-container">
-                        <img id="addPreviewImage" src="" alt="미리보기" class="preview-image" style="display: none;">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="edit-dialog-footer">
-                <button class="btn btn-outline" onclick="closeAddPageDialog()">취소</button>
-                <button class="btn btn-primary" onclick="saveNewPage()">추가</button>
-            </div>
-        </div>
-    </div>
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-viewer}"></th:block>
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-modals}"></th:block>
 
     <!-- 소식 상세보기 모달 -->
     <div id="announcementViewDialog" class="edit-dialog" style="display: none;">
@@ -783,390 +692,117 @@
         </div>
     </div>
 
-    <!-- 편집 모달 -->
-    <div id="editDialog" class="edit-dialog" style="display: none;">
-        <div class="edit-dialog-overlay" onclick="closeEditDialog()"></div>
-        <div class="edit-dialog-content">
-            <div class="edit-dialog-header">
-                <h3 class="edit-dialog-title"><span id="editPageNum">1</span>페이지 편집</h3>
-                <p class="edit-dialog-description">이미지 URL과 설명을 수정할 수 있습니다.</p>
-            </div>
-            
-            <div class="edit-dialog-body">
-                <div class="form-group">
-                    <label for="editImageUrl" class="form-label">이미지 URL</label>
-                    <input type="text" id="editImageUrl" class="form-input" placeholder="https://example.com/image.jpg">
+    <!-- QR 모달 -->
+    <div id="qrModal" class="modal" tabindex="-1" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">디지털 주보</h5>
+                    <button type="button" class="btn-close" onclick="closeQRModal()"></button>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">또는 이미지 업로드</label>
-                    <div class="upload-area">
-                        <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
-                        <button type="button" class="btn btn-outline upload-btn" onclick="document.getElementById('imageFileInput').click()">
-                            <i class="fas fa-upload"></i> 파일 선택
-                        </button>
-                        <span id="uploadFileName" class="upload-file-name"></span>
-                        <div id="uploadProgress" class="upload-progress" style="display: none;">
-                            <div class="upload-progress-bar"></div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <h3 class="fw-semibold mb-1" style="color: var(--foreground);">디지털 주보</h3>
+                        <p class="mb-3" style="font-size: 0.875rem; color: var(--muted-foreground);">QR 코드를 스캔하여 온라인 주보를 확인하세요</p>
+                        
+                        <!-- QR 코드 이미지 -->
+                        <div class="mb-3" th:if="${qrCodeImage != null}">
+                            <img th:src="'data:image/png;base64,' + ${qrCodeImage}" 
+                                 alt="QR 코드" 
+                                 class="img-fluid rounded shadow-sm" 
+                                 style="max-width: 250px; margin: 0 auto;">
                         </div>
+                        
+                        <!-- QR 코드가 없을 경우 아이콘 표시 -->
+                        <div class="d-flex align-items-center justify-content-center rounded-2 mx-auto mb-3" 
+                             th:if="${qrCodeImage == null}"
+                             style="width: 4rem; height: 4rem; background: var(--primary); background-opacity: 0.1;">
+                            <i class="fas fa-qrcode" style="font-size: 2rem; color: var(--primary);"></i>
+                        </div>
+                        
+                        <!-- QR 코드 공유 버튼 -->
+                        <button class="btn btn-outline-primary btn-sm" onclick="shareQRCode()">
+                            <i class="fas fa-share-alt me-1"></i> 주보 공유하기
+                        </button>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="editAlt" class="form-label">이미지 설명</label>
-                    <input type="text" id="editAlt" class="form-input" placeholder="이미지 설명을 입력하세요">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeQRModal()">닫기</button>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">미리보기</label>
-                    <div class="preview-container">
-                        <img id="previewImage" src="" alt="미리보기" class="preview-image">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="edit-dialog-footer">
-                <button class="btn btn-outline" onclick="closeEditDialog()">취소</button>
-                <button class="btn btn-primary" onclick="saveEdit()">저장</button>
             </div>
         </div>
     </div>
 
     <style>
-        .bulletin-viewer {
+        /* QR 모달 스타일 */
+        .modal {
             position: fixed;
-            inset: 0;
-            background: var(--background);
-            z-index: 9999;
-        }
-        
-        .bulletin-home-btn, .bulletin-edit-btn, .bulletin-add-btn, .bulletin-delete-btn {
-            position: absolute;
-            top: 1rem;
-            z-index: 20;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            border: none;
-            border-radius: 8px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .bulletin-home-btn {
-            left: 1rem;
-        }
-        
-        .bulletin-edit-btn {
-            left: 4rem;
-        }
-        
-        .bulletin-add-btn {
-            left: 7rem;
-            background: rgba(102, 126, 234, 0.9);
-        }
-        
-        .bulletin-delete-btn {
-            left: 10rem;
-            background: rgba(239, 68, 68, 0.9);
-        }
-        
-        .bulletin-home-btn:hover, .bulletin-edit-btn:hover {
-            background: rgba(255, 255, 255, 0.9);
-        }
-        
-        .bulletin-add-btn:hover {
-            background: rgba(102, 126, 234, 1);
-        }
-        
-        .bulletin-delete-btn:hover {
-            background: rgba(239, 68, 68, 1);
-        }
-        
-        .bulletin-home-btn i, .bulletin-edit-btn i {
-            font-size: 1.25rem;
-            color: var(--foreground);
-        }
-        
-        .bulletin-add-btn i, .bulletin-delete-btn i {
-            font-size: 1.25rem;
-            color: white;
-        }
-        
-        .bulletin-page-indicator {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .bulletin-container {
-            position: relative;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: var(--muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        
-        .bulletin-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            user-select: none;
-        }
-        
-        .bulletin-nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            border: none;
-            border-radius: 8px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            z-index: 10;
-        }
-        
-        .bulletin-nav-btn:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.9);
-        }
-        
-        .bulletin-nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .bulletin-prev-btn {
-            left: 0.5rem;
-        }
-        
-        .bulletin-next-btn {
-            right: 0.5rem;
-        }
-        
-        .bulletin-nav-btn i {
-            font-size: 1.25rem;
-            color: var(--foreground);
-        }
-        
-        .bulletin-dots {
-            position: absolute;
-            bottom: 1.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 0.5rem;
-            z-index: 10;
-        }
-        
-        .bulletin-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 9999px;
-            background: rgba(0, 0, 0, 0.3);
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            padding: 0;
-        }
-        
-        .bulletin-dot:hover {
             background: rgba(0, 0, 0, 0.5);
-        }
-        
-        .bulletin-dot.active {
-            background: var(--primary);
-            width: 32px;
-        }
-        
-        /* 편집 모달 스타일 */
-        .edit-dialog {
-            position: fixed;
-            inset: 0;
-            z-index: 10000;
+            z-index: 1050;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
-        .edit-dialog-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-        }
-        
-        .edit-dialog-content {
-            position: relative;
-            background: var(--card);
-            border-radius: 12px;
+
+        .modal-dialog {
             max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            z-index: 10001;
-        }
-        
-        .edit-dialog-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .edit-dialog-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--foreground);
-            margin: 0 0 0.5rem 0;
-        }
-        
-        .edit-dialog-description {
-            font-size: 0.875rem;
-            color: var(--muted-foreground);
+            width: 95%;
             margin: 0;
         }
-        
-        .edit-dialog-body {
-            padding: 1.5rem;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-        
-        .form-label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--foreground);
-            margin-bottom: 0.5rem;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
+
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             background: var(--background);
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--background);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
             color: var(--foreground);
-            transition: all 0.2s;
+            margin: 0;
         }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+
+        .modal-body {
+            padding: 2rem;
         }
-        
-        .preview-container {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-            background: var(--muted);
-            min-height: 200px;
+
+        .modal-footer {
+            padding: 1rem 2rem 2rem 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--muted-foreground);
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
-        .preview-image {
-            width: 100%;
-            height: 200px;
-            object-fit: contain;
+
+        .btn-close::before {
+            content: "×";
         }
-        
-        .edit-dialog-footer {
-            padding: 1.5rem;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-        }
-        
-        .btn {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
+
+        .btn-close:hover {
             color: var(--foreground);
-        }
-        
-        .btn-outline:hover {
-            background: var(--accent);
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: var(--primary-foreground);
-        }
-        
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-        
-        .upload-area {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .upload-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            width: fit-content;
-        }
-        
-        .upload-file-name {
-            font-size: 0.875rem;
-            color: var(--muted-foreground);
-        }
-        
-        .upload-progress {
-            width: 100%;
-            height: 4px;
-            background: var(--muted);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        
-        .upload-progress-bar {
-            height: 100%;
-            background: var(--primary);
-            width: 0%;
-            transition: width 0.3s;
         }
         
         /* 순모임 탭 스타일 */
@@ -1190,503 +826,15 @@
         }
     </style>
 
-    <script>
-        let bulletinPages = [];
-        let currentPage = 0;
-        let touchStartX = 0;
-        let touchEndX = 0;
-        const minSwipeDistance = 50;
-        
-        // API에서 주보 페이지 데이터 로드
-        async function loadBulletinPages() {
-            try {
-                const response = await fetch('/api/bulletin-pages');
-                const data = await response.json();
-                bulletinPages = data.map(page => ({
-                    id: page.id,
-                    image: page.imageUrl,
-                    alt: page.alt
-                }));
-                return true;
-            } catch (error) {
-                console.error('주보 페이지 로드 실패:', error);
-                alert('주보 페이지를 불러오는데 실패했습니다.');
-                return false;
-            }
-        }
-        
-        async function openBulletinViewer() {
-            // 데이터가 없으면 API에서 로드
-            if (bulletinPages.length === 0) {
-                const loaded = await loadBulletinPages();
-                if (!loaded) return;
-            }
-            
-            document.getElementById('bulletinViewer').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            goToPage(0);
-        }
-        
-        function closeBulletinViewer() {
-            document.getElementById('bulletinViewer').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-        
-        function goToPage(pageIndex) {
-            currentPage = pageIndex;
-            const bulletinImage = document.getElementById('bulletinImage');
-            bulletinImage.src = bulletinPages[pageIndex].image;
-            bulletinImage.alt = bulletinPages[pageIndex].alt;
-            
-            document.getElementById('currentPageNum').textContent = pageIndex + 1;
-            document.getElementById('totalPageNum').textContent = bulletinPages.length;
-            
-            // 버튼 상태 업데이트
-            document.getElementById('prevBtn').disabled = pageIndex === 0;
-            document.getElementById('nextBtn').disabled = pageIndex === bulletinPages.length - 1;
-            
-            // 점 표시 업데이트
-            const dots = document.querySelectorAll('.bulletin-dot');
-            dots.forEach((dot, index) => {
-                if (index === pageIndex) {
-                    dot.classList.add('active');
-                } else {
-                    dot.classList.remove('active');
-                }
-            });
-        }
-        
-        function goToNextPage() {
-            if (currentPage < bulletinPages.length - 1) {
-                goToPage(currentPage + 1);
-            }
-        }
-        
-        function goToPrevPage() {
-            if (currentPage > 0) {
-                goToPage(currentPage - 1);
-            }
-        }
-        
-        function openEditDialog() {
-            const currentPageData = bulletinPages[currentPage];
-            document.getElementById('editPageNum').textContent = currentPage + 1;
-            document.getElementById('editImageUrl').value = currentPageData.image;
-            document.getElementById('editAlt').value = currentPageData.alt;
-            document.getElementById('previewImage').src = currentPageData.image;
-            document.getElementById('editDialog').style.display = 'flex';
-        }
-        
-        function closeEditDialog() {
-            document.getElementById('editDialog').style.display = 'none';
-        }
-        
-        // 페이지 추가 모달 열기
-        function openAddPageDialog() {
-            const nextPageNumber = bulletinPages.length + 1;
-            document.getElementById('addPageNumber').value = nextPageNumber;
-            document.getElementById('addImageUrl').value = '';
-            document.getElementById('addAlt').value = '';
-            document.getElementById('addPreviewImage').style.display = 'none';
-            document.getElementById('addPageDialog').style.display = 'flex';
-        }
-        
-        // 페이지 추가 모달 닫기
-        function closeAddPageDialog() {
-            document.getElementById('addPageDialog').style.display = 'none';
-        }
-        
-        // 새 페이지 저장
-        async function saveNewPage() {
-            const pageNumber = parseInt(document.getElementById('addPageNumber').value);
-            const imageUrl = document.getElementById('addImageUrl').value;
-            const alt = document.getElementById('addAlt').value;
-            
-            if (!pageNumber || pageNumber < 1) {
-                alert('페이지 번호를 입력해주세요.');
-                return;
-            }
-            
-            if (!imageUrl) {
-                alert('이미지 URL을 입력해주세요.');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/bulletin-pages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        pageNumber: pageNumber,
-                        imageUrl: imageUrl,
-                        alt: alt
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('저장 실패');
-                }
-                
-                // 페이지 목록 새로고침
-                bulletinPages = [];
-                await loadBulletinPages();
-                
-                // 점 표시 업데이트
-                updateDots();
-                
-                // 새로 추가된 페이지로 이동
-                goToPage(bulletinPages.length - 1);
-                closeAddPageDialog();
-                
-                alert('새 페이지가 추가되었습니다!');
-            } catch (error) {
-                console.error('페이지 추가 실패:', error);
-                alert('페이지 추가에 실패했습니다.');
-            }
-        }
-        
-        // 현재 페이지 삭제
-        async function deleteCurrentPage() {
-            if (bulletinPages.length <= 1) {
-                alert('최소 1개의 페이지는 필요합니다.');
-                return;
-            }
-            
-            if (!confirm(`${currentPage + 1}페이지를 삭제하시겠습니까?`)) {
-                return;
-            }
-            
-            const pageId = bulletinPages[currentPage].id;
-            
-            try {
-                const response = await fetch(`/api/bulletin-pages/${pageId}`, {
-                    method: 'DELETE'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('삭제 실패');
-                }
-                
-                // 페이지 목록 새로고침
-                bulletinPages = [];
-                await loadBulletinPages();
-                
-                // 점 표시 업데이트
-                updateDots();
-                
-                // 이전 페이지로 이동 (현재 페이지가 마지막이면)
-                const newPage = currentPage >= bulletinPages.length ? bulletinPages.length - 1 : currentPage;
-                goToPage(newPage);
-                
-                alert('페이지가 삭제되었습니다!');
-            } catch (error) {
-                console.error('페이지 삭제 실패:', error);
-                alert('페이지 삭제에 실패했습니다.');
-            }
-        }
-        
-        // 점 표시 업데이트
-        function updateDots() {
-            const dotsContainer = document.querySelector('.bulletin-dots');
-            dotsContainer.innerHTML = '';
-            
-            bulletinPages.forEach((_, index) => {
-                const dot = document.createElement('button');
-                dot.className = 'bulletin-dot';
-                dot.onclick = () => goToPage(index);
-                dotsContainer.appendChild(dot);
-            });
-        }
-        
-        async function saveEdit() {
-            const newImageUrl = document.getElementById('editImageUrl').value;
-            const newAlt = document.getElementById('editAlt').value;
-            
-            if (!newImageUrl) {
-                alert('이미지 URL을 입력해주세요.');
-                return;
-            }
-            
-            const pageId = bulletinPages[currentPage].id;
-            
-            try {
-                const response = await fetch(`/api/bulletin-pages/${pageId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        pageNumber: currentPage + 1,
-                        imageUrl: newImageUrl,
-                        alt: newAlt
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('저장 실패');
-                }
-                
-                const updatedPage = await response.json();
-                
-                // 로컬 데이터 업데이트
-                bulletinPages[currentPage].image = updatedPage.imageUrl;
-                bulletinPages[currentPage].alt = updatedPage.alt;
-                
-                goToPage(currentPage);
-                closeEditDialog();
-                
-                alert('페이지가 수정되었습니다!');
-            } catch (error) {
-                console.error('페이지 저장 실패:', error);
-                alert('페이지 저장에 실패했습니다.');
-            }
-        }
-        
-        // 파일 업로드 처리
-        async function uploadImageFile(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const progressBar = document.querySelector('.upload-progress-bar');
-            const progressContainer = document.getElementById('uploadProgress');
-            
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
-            
-            try {
-                // 프로그레스 바 애니메이션
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += 10;
-                    if (progress >= 90) {
-                        clearInterval(progressInterval);
-                    }
-                    progressBar.style.width = progress + '%';
-                }, 100);
-                
-                const response = await fetch('/api/bulletin-pages/upload-image', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                
-                if (!response.ok) {
-                    throw new Error('업로드 실패');
-                }
-                
-                const data = await response.json();
-                
-                // 업로드된 이미지 URL 설정 (Cloudinary URL 직접 사용)
-                const imageUrl = data.imageUrl;
-                document.getElementById('editImageUrl').value = imageUrl;
-                document.getElementById('previewImage').src = imageUrl;
-                document.getElementById('uploadFileName').textContent = data.fileName;
-                
-                setTimeout(() => {
-                    progressContainer.style.display = 'none';
-                }, 500);
-                
-                return imageUrl;
-            } catch (error) {
-                console.error('이미지 업로드 실패:', error);
-                alert('이미지 업로드에 실패했습니다.');
-                progressContainer.style.display = 'none';
-                return null;
-            }
-        }
-        
-        // 추가 페이지 이미지 업로드 처리
-        async function uploadAddImageFile(file) {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const progressBar = document.querySelector('#addUploadProgress .upload-progress-bar');
-            const progressContainer = document.getElementById('addUploadProgress');
-            
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
-            
-            try {
-                // 프로그레스 바 애니메이션
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += 10;
-                    if (progress >= 90) {
-                        clearInterval(progressInterval);
-                    }
-                    progressBar.style.width = progress + '%';
-                }, 100);
-                
-                const response = await fetch('/api/bulletin-pages/upload-image', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                
-                if (!response.ok) {
-                    throw new Error('업로드 실패');
-                }
-                
-                const data = await response.json();
-                
-                // 업로드된 이미지 URL 설정
-                const imageUrl = data.imageUrl;
-                document.getElementById('addImageUrl').value = imageUrl;
-                document.getElementById('addPreviewImage').src = imageUrl;
-                document.getElementById('addPreviewImage').style.display = 'block';
-                document.getElementById('addUploadFileName').textContent = data.fileName;
-                
-                setTimeout(() => {
-                    progressContainer.style.display = 'none';
-                }, 500);
-                
-                return imageUrl;
-            } catch (error) {
-                console.error('이미지 업로드 실패:', error);
-                alert('이미지 업로드에 실패했습니다.');
-                progressContainer.style.display = 'none';
-                return null;
-            }
-        }
-        
-        // 이미지 URL 입력 시 미리보기 업데이트
-        document.addEventListener('DOMContentLoaded', function() {
-            // 편집 모달 이미지 URL 입력
-            const editImageUrlInput = document.getElementById('editImageUrl');
-            if (editImageUrlInput) {
-                editImageUrlInput.addEventListener('input', function(e) {
-                    const previewImage = document.getElementById('previewImage');
-                    if (previewImage) {
-                        previewImage.src = e.target.value || '';
-                    }
-                });
-            }
-            
-            // 파일 선택 이벤트 (편집 모달)
-            const imageFileInput = document.getElementById('imageFileInput');
-            if (imageFileInput) {
-                imageFileInput.addEventListener('change', async function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        // 파일 타입 검증
-                        if (!file.type.startsWith('image/')) {
-                            alert('이미지 파일만 업로드할 수 있습니다.');
-                            return;
-                        }
-                        
-                        // 파일 크기 검증 (10MB)
-                        if (file.size > 10 * 1024 * 1024) {
-                            alert('파일 크기는 10MB 이하여야 합니다.');
-                            return;
-                        }
-                        
-                        await uploadImageFile(file);
-                    }
-                });
-            }
-            
-            // 추가 모달 이미지 URL 입력
-            const addImageUrlInput = document.getElementById('addImageUrl');
-            if (addImageUrlInput) {
-                addImageUrlInput.addEventListener('input', function(e) {
-                    const previewImage = document.getElementById('addPreviewImage');
-                    if (previewImage) {
-                        previewImage.src = e.target.value || '';
-                        previewImage.style.display = e.target.value ? 'block' : 'none';
-                    }
-                });
-            }
-            
-            // 파일 선택 이벤트 (추가 모달)
-            const addImageFileInput = document.getElementById('addImageFileInput');
-            if (addImageFileInput) {
-                addImageFileInput.addEventListener('change', async function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        // 파일 타입 검증
-                        if (!file.type.startsWith('image/')) {
-                            alert('이미지 파일만 업로드할 수 있습니다.');
-                            return;
-                        }
-                        
-                        // 파일 크기 검증 (10MB)
-                        if (file.size > 10 * 1024 * 1024) {
-                            alert('파일 크기는 10MB 이하여야 합니다.');
-                            return;
-                        }
-                        
-                        await uploadAddImageFile(file);
-                    }
-                });
-            }
-        });
-        
-        // 터치 이벤트 처리
-        const bulletinContainer = document.getElementById('bulletinContainer');
-        
-        bulletinContainer.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchEndX = 0;
-        });
-        
-        bulletinContainer.addEventListener('touchmove', (e) => {
-            touchEndX = e.touches[0].clientX;
-        });
-        
-        bulletinContainer.addEventListener('touchend', () => {
-            if (!touchStartX || !touchEndX) return;
-            
-            const distance = touchStartX - touchEndX;
-            const isLeftSwipe = distance > minSwipeDistance;
-            const isRightSwipe = distance < -minSwipeDistance;
-            
-            if (isLeftSwipe && currentPage < bulletinPages.length - 1) {
-                goToNextPage();
-            }
-            if (isRightSwipe && currentPage > 0) {
-                goToPrevPage();
-            }
-        });
-        
-        // 키보드 네비게이션
-        document.addEventListener('keydown', (e) => {
-            const viewer = document.getElementById('bulletinViewer');
-            if (viewer.style.display === 'none') return;
-            
-            if (e.key === 'ArrowLeft') {
-                goToPrevPage();
-            } else if (e.key === 'ArrowRight') {
-                goToNextPage();
-            } else if (e.key === 'Escape') {
-                closeBulletinViewer();
-            }
-        });
-    </script>
-
+    <!-- 네비게이션 스크립트 -->
+    <th:block th:replace="~{fragments/bottom-nav :: navigation-scripts}"></th:block>
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-scripts}"></th:block>
+    
+    <!-- 페이지 기능 스크립트 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- 탭 전환 및 아코디언 기능 스크립트 -->
     <script>
-        
-        // 네비게이션 상태 업데이트
-        function updateNavigationState(activeTab) {
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            const activeNavItem = document.querySelector(`[onclick*="${activeTab}"]`);
-            if (activeNavItem) {
-                activeNavItem.classList.add('active');
-            }
-        }
-        
+        // 아코디언 토글 함수
         function toggleSection(contentId) {
             const content = document.getElementById(contentId);
             const icon = document.getElementById(contentId.replace('Content', 'Icon'));
@@ -1695,12 +843,12 @@
                 // 열기
                 content.style.maxHeight = content.scrollHeight + 'px';
                 content.style.opacity = '1';
-                icon.style.transform = 'rotate(180deg)';
+                if (icon) icon.style.transform = 'rotate(180deg)';
             } else {
                 // 닫기
                 content.style.maxHeight = '0px';
                 content.style.opacity = '0';
-                icon.style.transform = 'rotate(0deg)';
+                if (icon) icon.style.transform = 'rotate(0deg)';
             }
         }
         
@@ -1738,13 +886,6 @@
                 } else {
                     importantBadge.style.display = 'none';
                 }
-                
-                // 카테고리 설정 (임시)
-                document.getElementById('viewAnnouncementCategory').textContent = '행사';
-                
-                // 아이콘 설정 (임시)
-                const iconElement = document.getElementById('viewAnnouncementIcon');
-                iconElement.className = 'fas fa-heart';
                 
                 document.getElementById('announcementViewDialog').style.display = 'flex';
                 
@@ -1891,439 +1032,6 @@
                 }
             }
         }
-        
-        // 순모임 문의하기 기능
-        function contactSmallGroup() {
-            const phoneNumber = '010-5240-7719';
-            const message = '순모임 참여 문의드립니다.';
-            
-            // 전화 걸기 옵션
-            const callOption = confirm('전화로 문의하시겠습니까?');
-            if (callOption) {
-                window.location.href = `tel:${phoneNumber}`;
-                return;
-            }
-            
-            // 카카오톡 공유 옵션 (모바일에서만 작동)
-            if (navigator.share) {
-                navigator.share({
-                    title: '순모임 참여 문의',
-                    text: message,
-                    url: window.location.href
-                }).catch(() => {
-                    // 공유 실패 시 클립보드 복사
-                    copyToClipboard(`${message}\n연락처: ${phoneNumber}`);
-                });
-            } else {
-                // 공유 API가 없는 경우 클립보드 복사
-                copyToClipboard(`${message}\n연락처: ${phoneNumber}`);
-            }
-        }
-        
-        // 순모임 관련 전역 변수
-        let smallGroups = [];
-        let currentEditingSmallGroupId = null;
-        
-        // 순모임 목록 로드
-        async function loadSmallGroups() {
-            try {
-                const response = await fetch('/api/small-groups');
-                if (!response.ok) {
-                    throw new Error('순모임 목록을 불러올 수 없습니다.');
-                }
-                
-                smallGroups = await response.json();
-                renderSmallGroups();
-            } catch (error) {
-                console.error('순모임 목록 로드 실패:', error);
-                showNoSmallGroups();
-            }
-        }
-        
-        // 순모임 목록 렌더링
-        function renderSmallGroups() {
-            const container = document.getElementById('smallGroupsList');
-            const noGroupsDiv = document.getElementById('noSmallGroups');
-            
-            if (smallGroups.length === 0) {
-                container.innerHTML = '';
-                noGroupsDiv.style.display = 'block';
-                return;
-            }
-            
-            noGroupsDiv.style.display = 'none';
-            container.innerHTML = smallGroups.map(group => `
-                <div class="card" style="border: 1px solid var(--border); border-opacity: 0.5;">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="flex-grow-1">
-                                <h5 class="fw-semibold mb-1" style="color: var(--foreground);">${group.name}</h5>
-                                <span class="badge px-2 py-1" style="font-size: 0.75rem; background: var(--secondary); color: var(--secondary-foreground);">${group.category || '일반'}</span>
-                            </div>
-                            <div class="d-flex gap-1">
-                                <button onclick="openEditSmallGroupDialog(${group.id})" 
-                                        class="btn btn-sm btn-outline-secondary" 
-                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-edit" style="font-size: 0.75rem;"></i>
-                                </button>
-                                <button onclick="deleteSmallGroup(${group.id})" 
-                                        class="btn btn-sm btn-outline-danger" 
-                                        style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="fas fa-user text-muted"></i>
-                            <span class="text-muted small">순장:</span>
-                            <span class="fw-medium">${group.leader}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="fas fa-users text-muted"></i>
-                            <span class="text-muted small">순원:</span>
-                            <span class="fw-medium">${group.memberCount}명</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <i class="fas fa-map-marker-alt text-muted"></i>
-                            <span class="text-muted small">장소:</span>
-                            <span class="fw-medium">${group.location}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <i class="fas fa-clock text-muted"></i>
-                            <span class="text-muted small">시간:</span>
-                            <span class="fw-medium">${group.meetingTime}</span>
-                        </div>
-                        
-                        ${group.description ? `<p class="text-muted small mb-3" style="line-height: 1.5;">${group.description}</p>` : ''}
-                        
-                        <button onclick="viewSmallGroup(${group.id})" class="btn btn-primary w-100">
-                            가입하기
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        // 순모임이 없는 경우 표시
-        function showNoSmallGroups() {
-            const container = document.getElementById('smallGroupsList');
-            const noGroupsDiv = document.getElementById('noSmallGroups');
-            
-            container.innerHTML = '';
-            noGroupsDiv.style.display = 'block';
-        }
-        
-        // 순모임 추가 다이얼로그 열기
-        function openAddSmallGroupDialog() {
-            currentEditingSmallGroupId = null;
-            showSmallGroupDialog('순모임 추가', '추가');
-            clearSmallGroupForm();
-        }
-        
-        // 순모임 편집 다이얼로그 열기
-        async function openEditSmallGroupDialog(id) {
-            try {
-                const response = await fetch(`/api/small-groups/${id}`);
-                if (!response.ok) {
-                    throw new Error('순모임을 불러올 수 없습니다.');
-                }
-                
-                const smallGroup = await response.json();
-                currentEditingSmallGroupId = id;
-                showSmallGroupDialog('순모임 수정', '수정');
-                fillSmallGroupForm(smallGroup);
-            } catch (error) {
-                console.error('순모임 조회 실패:', error);
-                alert('순모임을 불러오는데 실패했습니다.');
-            }
-        }
-        
-        // 순모임 다이얼로그 표시
-        function showSmallGroupDialog(title, buttonText) {
-            // 간단한 모달 대신 prompt 사용 (실제 구현에서는 모달을 만들어야 함)
-            const name = prompt('순모임 이름:', '');
-            if (!name) return;
-            
-            const leader = prompt('순장 이름:', '');
-            if (!leader) return;
-            
-            const memberCount = parseInt(prompt('순원 수:', '0')) || 0;
-            const location = prompt('모이는 장소:', '');
-            if (!location) return;
-            
-            const meetingTime = prompt('모이는 시간:', '');
-            if (!meetingTime) return;
-            
-            const category = prompt('카테고리:', '');
-            const description = prompt('세부내용:', '');
-            
-            const smallGroupData = {
-                name: name,
-                leader: leader,
-                memberCount: memberCount,
-                location: location,
-                meetingTime: meetingTime,
-                category: category,
-                description: description,
-                isActive: true
-            };
-            
-            saveSmallGroup(smallGroupData);
-        }
-        
-        // 순모임 폼 초기화
-        function clearSmallGroupForm() {
-            // 폼 초기화 로직
-        }
-        
-        // 순모임 폼 채우기
-        function fillSmallGroupForm(smallGroup) {
-            // 폼 채우기 로직
-        }
-        
-        // 순모임 저장
-        async function saveSmallGroup(smallGroupData) {
-            try {
-                let response;
-                if (currentEditingSmallGroupId) {
-                    // 수정
-                    response = await fetch(`/api/small-groups/${currentEditingSmallGroupId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(smallGroupData)
-                    });
-                } else {
-                    // 추가
-                    response = await fetch('/api/small-groups', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(smallGroupData)
-                    });
-                }
-                
-                if (!response.ok) {
-                    throw new Error('저장에 실패했습니다.');
-                }
-                
-                alert(currentEditingSmallGroupId ? '순모임이 수정되었습니다!' : '순모임이 추가되었습니다!');
-                await loadSmallGroups();
-                
-            } catch (error) {
-                console.error('순모임 저장 실패:', error);
-                alert('순모임 저장에 실패했습니다.');
-            }
-        }
-        
-        // 순모임 삭제
-        async function deleteSmallGroup(id) {
-            if (confirm('이 순모임을 삭제하시겠습니까?')) {
-                try {
-                    const response = await fetch(`/api/small-groups/${id}`, {
-                        method: 'DELETE'
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('삭제에 실패했습니다.');
-                    }
-                    
-                    alert('순모임이 삭제되었습니다!');
-                    await loadSmallGroups();
-                    
-                } catch (error) {
-                    console.error('순모임 삭제 실패:', error);
-                    alert('순모임 삭제에 실패했습니다.');
-                }
-            }
-        }
-        
-        // 순모임 상세보기
-        async function viewSmallGroup(id) {
-            try {
-                const response = await fetch(`/api/small-groups/${id}`);
-                if (!response.ok) {
-                    throw new Error('순모임을 불러올 수 없습니다.');
-                }
-                
-                const smallGroup = await response.json();
-                
-                // 가입 신청
-                const name = prompt('이름을 입력하세요:');
-                if (!name) return;
-                
-                const phone = prompt('연락처를 입력하세요:');
-                if (!phone) return;
-                
-                const email = prompt('이메일을 입력하세요 (선택사항):') || '';
-                const message = prompt('가입 동기를 간단히 입력하세요 (선택사항):') || '';
-                
-                const joinRequest = {
-                    name: name,
-                    phone: phone,
-                    email: email,
-                    message: message
-                };
-                
-                const joinResponse = await fetch(`/api/small-groups/${id}/join`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(joinRequest)
-                });
-                
-                if (joinResponse.ok) {
-                    alert('가입 신청이 완료되었습니다! 순장이 연락드릴 예정입니다.');
-                } else {
-                    const errorText = await joinResponse.text();
-                    alert('가입 신청에 실패했습니다: ' + errorText);
-                }
-                
-            } catch (error) {
-                console.error('순모임 조회 실패:', error);
-                alert('순모임을 불러오는데 실패했습니다.');
-            }
-        }
-        
-        // 탭 전환 시 순모임 목록 로드
-        function switchTab(tabName) {
-            // 모든 탭 컨텐츠 숨기기
-            const allTabs = document.querySelectorAll('.tab-content');
-            allTabs.forEach(tab => {
-                tab.style.display = 'none';
-            });
-            
-            // 선택된 탭만 보이기
-            const activeTab = document.getElementById(tabName + 'Tab');
-            if (activeTab) {
-                activeTab.style.display = 'block';
-                
-                // 순모임 탭이 선택된 경우 목록 로드
-                if (tabName === 'smallGroups') {
-                    loadSmallGroups();
-                }
-            }
-            
-            // 네비게이션 활성화 상태 업데이트
-            updateNavigationState(tabName);
-        }
     </script>
-    
-    <!-- QR 모달 -->
-    <div id="qrModal" class="modal" tabindex="-1" style="display: none;">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">디지털 주보</h5>
-                    <button type="button" class="btn-close" onclick="closeQRModal()"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="text-center">
-                        <h3 class="fw-semibold mb-1" style="color: var(--foreground);">디지털 주보</h3>
-                        <p class="mb-3" style="font-size: 0.875rem; color: var(--muted-foreground);">QR 코드를 스캔하여 온라인 주보를 확인하세요</p>
-                        
-                        <!-- QR 코드 이미지 -->
-                        <div class="mb-3" th:if="${qrCodeImage != null}">
-                            <img th:src="'data:image/png;base64,' + ${qrCodeImage}" 
-                                 alt="QR 코드" 
-                                 class="img-fluid rounded shadow-sm" 
-                                 style="max-width: 250px; margin: 0 auto;">
-                        </div>
-                        
-                        <!-- QR 코드가 없을 경우 아이콘 표시 -->
-                        <div class="d-flex align-items-center justify-content-center rounded-2 mx-auto mb-3" 
-                             th:if="${qrCodeImage == null}"
-                             style="width: 4rem; height: 4rem; background: var(--primary); background-opacity: 0.1;">
-                            <i class="fas fa-qrcode" style="font-size: 2rem; color: var(--primary);"></i>
-                        </div>
-                        
-                        <!-- QR 코드 공유 버튼 -->
-                        <button class="btn btn-outline-primary btn-sm" onclick="shareQRCode()">
-                            <i class="fas fa-share-alt me-1"></i> 주보 공유하기
-                        </button>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeQRModal()">닫기</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        /* QR 모달 스타일 */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1050;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-dialog {
-            max-width: 500px;
-            width: 95%;
-            margin: 0;
-        }
-
-        .modal-content {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            background: var(--background);
-        }
-
-        .modal-header {
-            padding: 1.5rem 2rem 1rem 2rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--background);
-        }
-
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--foreground);
-            margin: 0;
-        }
-
-        .modal-body {
-            padding: 2rem;
-        }
-
-        .modal-footer {
-            padding: 1rem 2rem 2rem 2rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .btn-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--muted-foreground);
-            cursor: pointer;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-close:hover {
-            color: var(--foreground);
-        }
-    </style>
-    
-    <!-- 네비게이션 스크립트 -->
-    <th:block th:replace="~{fragments/bottom-nav :: navigation-scripts}"></th:block>
 </body>
 </html>

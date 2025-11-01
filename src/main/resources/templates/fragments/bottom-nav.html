@@ -8,11 +8,7 @@
                 <i class="fas fa-home"></i>
                 <small>홈</small>
             </button>
-            <button class="nav-item" id="nav-calendar" onclick="setActiveTab('calendar'); scrollToSection('schedule')">
-                <i class="fas fa-calendar"></i>
-                <small>일정</small>
-            </button>
-            <button class="nav-item active" id="nav-bulletin" onclick="setActiveTab('bulletin'); openBulletinViewer()">
+            <button class="nav-item active" id="nav-bulletin" onclick="setActiveTab('bulletin'); openBulletinViewer();">
                 <i class="fas fa-book-open"></i>
                 <small>주보</small>
             </button>
@@ -24,10 +20,6 @@
                 <i class="fas fa-users"></i>
                 <small>순모임</small>
             </button>
-            <button class="nav-item" id="nav-news" onclick="setActiveTab('news'); scrollToSection('announcements')">
-                <i class="fas fa-bullhorn"></i>
-                <small>소식</small>
-            </button>
         </div>
     </nav>
 
@@ -38,99 +30,125 @@
 
     <!-- JavaScript -->
     <script th:fragment="navigation-scripts">
-        // 네비게이션 활성 탭 설정
-        function setActiveTab(tabId) {
-            // 모든 네비게이션 아이템에서 active 클래스 제거
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
+        // 전역 네비게이션 함수들 (중복 방지)
+        if (typeof window.setActiveTab === 'undefined') {
+            // 네비게이션 활성 탭 설정
+            window.setActiveTab = function(tabId) {
+                try {
+                    // 모든 네비게이션 아이템에서 active 클래스 제거
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // 선택된 탭에 active 클래스 추가
+                    const activeTab = document.getElementById('nav-' + tabId);
+                    if (activeTab) {
+                        activeTab.classList.add('active');
+                        // localStorage에 저장
+                        localStorage.setItem('activeTab', tabId);
+                    }
+                } catch (error) {
+                    console.error('setActiveTab 오류:', error);
+                }
+            };
             
-            // 선택된 탭에 active 클래스 추가
-            const activeTab = document.getElementById('nav-' + tabId);
-            if (activeTab) {
-                activeTab.classList.add('active');
-            }
+            // 섹션으로 부드럽게 스크롤
+            window.scrollToSection = function(sectionId) {
+                try {
+                    let targetElement;
+                    
+                    // ID로 직접 찾기 시도
+                    targetElement = document.getElementById(sectionId);
+                    
+                    // ID로 찾지 못한 경우 제목으로 찾기
+                    if (!targetElement) {
+                        const searchTerms = {
+                            'schedule': '예배 일정',
+                            'calendar': '예배 일정',
+                            'announcements': '교회 소식',
+                            'contact': '연락처'
+                        };
+                        
+                        const searchTerm = searchTerms[sectionId];
+                        if (searchTerm) {
+                            const headings = document.querySelectorAll('h2, h3, h4, h5');
+                            for (let heading of headings) {
+                                if (heading.textContent.includes(searchTerm)) {
+                                    targetElement = heading.closest('section') || heading;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (targetElement) {
+                        // 헤더 높이 고려 (있는 경우)
+                        const headerHeight = 64; // 4rem = 64px
+                        const elementPosition = targetElement.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+                        
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    } else {
+                        console.warn('섹션을 찾을 수 없습니다:', sectionId);
+                    }
+                } catch (error) {
+                    console.error('scrollToSection 오류:', error);
+                }
+            };
+            
+            // 초기화 함수
+            window.initBottomNav = function() {
+                try {
+                    const currentPath = window.location.pathname;
+                    
+                    // 모든 nav-item에서 active 클래스 제거
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // localStorage에서 저장된 활성 탭 확인
+                    const savedTab = localStorage.getItem('activeTab');
+                    
+                    // 경로에 따른 기본 활성 탭 설정
+                    let activeTabId = null;
+                    
+                    if (currentPath === '/' || currentPath === '/mobile') {
+                        activeTabId = 'home';
+                    } else if (currentPath === '/bulletin') {
+                        activeTabId = 'bulletin';
+                    } else if (currentPath.startsWith('/sheet-music')) {
+                        activeTabId = 'music';
+                    } else if (currentPath.startsWith('/small-groups')) {
+                        activeTabId = 'small-groups';
+                    }
+                    
+                    // 저장된 탭이 있고 홈 페이지인 경우 저장된 탭 사용
+                    if (savedTab && (currentPath === '/' || currentPath === '/mobile')) {
+                        activeTabId = savedTab;
+                    }
+                    
+                    // 활성 탭 설정
+                    if (activeTabId) {
+                        const activeTab = document.getElementById('nav-' + activeTabId);
+                        if (activeTab) {
+                            activeTab.classList.add('active');
+                        }
+                    }
+                } catch (error) {
+                    console.error('initBottomNav 오류:', error);
+                }
+            };
         }
         
-        // 섹션으로 부드럽게 스크롤
-        function scrollToSection(sectionId) {
-            let targetElement;
-            
-            // ID로 직접 찾기 시도
-            targetElement = document.getElementById(sectionId);
-            
-            // ID로 찾지 못한 경우 제목으로 찾기
-            if (!targetElement) {
-                if (sectionId === 'schedule' || sectionId === 'calendar') {
-                    // 예배 일정 섹션 찾기 - 텍스트 내용으로 검색
-                    const headings = document.querySelectorAll('h2, h3, h4, h5');
-                    for (let heading of headings) {
-                        if (heading.textContent.includes('예배 일정')) {
-                            targetElement = heading.closest('section') || heading;
-                            break;
-                        }
-                    }
-                } else if (sectionId === 'announcements') {
-                    // 교회 소식 섹션 찾기 - 텍스트 내용으로 검색
-                    const headings = document.querySelectorAll('h2, h3, h4, h5');
-                    for (let heading of headings) {
-                        if (heading.textContent.includes('교회 소식')) {
-                            targetElement = heading.closest('section') || heading;
-                            break;
-                        }
-                    }
-                } else if (sectionId === 'contact') {
-                    // 연락처 섹션 찾기 - 텍스트 내용으로 검색
-                    const headings = document.querySelectorAll('h2, h3, h4, h5');
-                    for (let heading of headings) {
-                        if (heading.textContent.includes('연락처')) {
-                            targetElement = heading.closest('section') || heading;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (targetElement) {
-                targetElement.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+        // 페이지 로드 시 초기화 (중복 방지)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', window.initBottomNav);
+        } else {
+            window.initBottomNav();
         }
-        
-        // 페이지 로드 시 현재 경로에 따라 활성 탭 설정
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            
-            // 모든 nav-item에서 active 클래스 제거
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // 경로에 따른 기본 활성 탭 설정
-            if (currentPath === '/' || currentPath === '/mobile') {
-                const homeTab = document.getElementById('nav-home');
-                if (homeTab) {
-                    homeTab.classList.add('active');
-                }
-            } else if (currentPath === '/bulletin') {
-                const bulletinTab = document.getElementById('nav-bulletin');
-                if (bulletinTab) {
-                    bulletinTab.classList.add('active');
-                }
-            } else if (currentPath.startsWith('/sheet-music')) {
-                const musicTab = document.getElementById('nav-music');
-                if (musicTab) {
-                    musicTab.classList.add('active');
-                }
-            } else if (currentPath.startsWith('/small-groups')) {
-                const smallGroupsTab = document.getElementById('nav-small-groups');
-                if (smallGroupsTab) {
-                    smallGroupsTab.classList.add('active');
-                }
-            }
-        });
     </script>
 </body>
 </html>

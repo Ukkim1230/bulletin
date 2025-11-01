@@ -9,6 +9,7 @@
     
     <!-- 공통 스타일 -->
     <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-styles}"></th:block>
     <style>
         /* 메인페이지와 동일한 흑백 디자인 */
         :root {
@@ -906,7 +907,12 @@
     <th:block th:replace="~{fragments/bottom-nav :: bottom-nav}"></th:block>
     <th:block th:replace="~{fragments/bottom-nav :: refresh-btn}"></th:block>
     
+    <!-- 주보 뷰어 -->
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-viewer}"></th:block>
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-modals}"></th:block>
+    
     <!-- 네비게이션 스크립트 -->
     <th:block th:replace="~{fragments/bottom-nav :: navigation-scripts}"></th:block>
+    <th:block th:replace="~{fragments/bulletin-viewer :: bulletin-scripts}"></th:block>
 </body>
 </html>

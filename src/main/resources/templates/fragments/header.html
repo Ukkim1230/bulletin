@@ -18,42 +18,10 @@
 
             <!-- 우측: 아이콘 버튼들 -->
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <!-- 로그인 상태에 따른 버튼 표시 -->
-                <div th:if="${session.user != null}" class="user-info" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="username-text" style="font-size: 0.875rem; color: var(--muted-foreground);" th:text="'안녕하세요, ' + ${session.username} + '님'">안녕하세요, 사용자님</span>
-                    <form th:action="@{/logout}" method="post" style="display: inline;">
-                        <button type="submit" class="logout-btn" style="background: var(--destructive); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;" 
-                                onmouseover="this.style.background='var(--destructive-hover)'" 
-                                onmouseout="this.style.background='var(--destructive)'">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span class="btn-text">로그아웃</span>
-                        </button>
-                    </form>
-                </div>
-                <div th:if="${session.user == null}" class="auth-buttons" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <a th:href="@{/login}" class="login-btn" style="background: var(--primary); color: var(--primary-foreground); border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; transition: background-color 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;" 
-                       onmouseover="this.style.background='var(--primary-hover)'" 
-                       onmouseout="this.style.background='var(--primary)'">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span class="btn-text">로그인</span>
-                    </a>
-                    <a th:href="@{/register}" class="register-btn" style="background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 0.375rem; text-decoration: none; font-size: 0.875rem; transition: background-color 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 0.25rem;" 
-                       onmouseover="this.style.background='var(--accent)'" 
-                       onmouseout="this.style.background='var(--secondary)'">
-                        <i class="fas fa-user-plus"></i>
-                        <span class="btn-text">회원가입</span>
-                    </a>
-                </div>
-                
                 <button type="button" onclick="openQRModal()" style="background: transparent; border: none; padding: 0.5rem; cursor: pointer; border-radius: 0.375rem; transition: background-color 0.2s;" 
                         onmouseover="this.style.background='var(--accent)'" 
                         onmouseout="this.style.background='transparent'">
                     <i class="fas fa-qrcode" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
-                </button>
-                <button type="button" style="background: transparent; border: none; padding: 0.5rem; cursor: pointer; border-radius: 0.375rem; transition: background-color 0.2s;" 
-                        onmouseover="this.style.background='var(--accent)'" 
-                        onmouseout="this.style.background='transparent'">
-                    <i class="fas fa-bell" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
                 </button>
                 <button type="button" id="menuBtn" style="background: transparent; border: none; padding: 0.5rem; cursor: pointer; border-radius: 0.375rem; transition: background-color 0.2s;" 
                         onmouseover="this.style.background='var(--accent)'" 
@@ -77,6 +45,37 @@
         <!-- 드롭다운 메뉴 -->
         <div id="menuDropdown" style="position: absolute; top: 4rem; left: 0; right: 0; background: var(--card); border-bottom: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); display: none;">
             <div class="container" style="padding: 1rem;">
+                <!-- 사용자 정보 섹션 -->
+                <div th:if="${session.user != null}" style="padding: 0.75rem 1rem; margin-bottom: 0.5rem; background: var(--accent); border-radius: 0.5rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 0.875rem; color: var(--foreground);" th:text="'안녕하세요, ' + ${session.username} + '님'">안녕하세요, 사용자님</span>
+                        <form th:action="@{/logout}" method="post" style="display: inline;">
+                            <button type="submit" style="background: var(--destructive); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem;" 
+                                    onmouseover="this.style.background='var(--destructive-hover)'" 
+                                    onmouseout="this.style.background='var(--destructive)'">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>로그아웃</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- 로그인/회원가입 버튼 (로그인하지 않은 경우) -->
+                <div th:if="${session.user == null}" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <a th:href="@{/login}" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars';" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; border-radius: 0.5rem; text-decoration: none; background: var(--primary); color: var(--primary-foreground); font-weight: 500; transition: background-color 0.2s;" 
+                       onmouseover="this.style.background='var(--primary-hover)'" 
+                       onmouseout="this.style.background='var(--primary)'">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>로그인</span>
+                    </a>
+                    <a th:href="@{/register}" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars';" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; border-radius: 0.5rem; text-decoration: none; background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); font-weight: 500; transition: background-color 0.2s;" 
+                       onmouseover="this.style.background='var(--accent)'" 
+                       onmouseout="this.style.background='var(--secondary)'">
+                        <i class="fas fa-user-plus"></i>
+                        <span>회원가입</span>
+                    </a>
+                </div>
+                
                 <nav style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
                     <a href="/" onclick="document.getElementById('menuDropdown').style.display='none'; document.getElementById('menuIcon').className='fas fa-bars';" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; text-decoration: none; background: var(--muted); color: var(--foreground); font-weight: 500;">
                         <i class="fas fa-home" style="width: 1.25rem; height: 1.25rem; font-size: 1.25rem;"></i>
@@ -120,40 +119,6 @@
             background: rgba(0, 0, 0, 0.05) !important;
         }
         
-        /* 모바일 반응형 스타일 */
-        @media (max-width: 768px) {
-            .auth-buttons {
-                gap: 0.25rem !important;
-            }
-            
-            .login-btn,
-            .register-btn {
-                padding: 0.5rem !important;
-                min-width: auto !important;
-            }
-            
-            .login-btn .btn-text,
-            .register-btn .btn-text {
-                display: none;
-            }
-            
-            .login-btn i,
-            .register-btn i {
-                margin: 0 !important;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .auth-buttons {
-                gap: 0.25rem !important;
-            }
-            
-            .login-btn,
-            .register-btn {
-                padding: 0.5rem !important;
-            }
-        }
-        
         /* 작은 화면에서 헤더 제목 줄이기 */
         @media (max-width: 640px) {
             header .container {
@@ -170,19 +135,6 @@
             
             header .container > div:first-child p {
                 font-size: 0.625rem !important;
-            }
-            
-            /* 로그아웃 버튼도 모바일 반응형 */
-            .user-info .username-text {
-                display: none !important;
-            }
-            
-            .logout-btn {
-                padding: 0.5rem !important;
-            }
-            
-            .logout-btn .btn-text {
-                display: none !important;
             }
             
             /* 우측 아이콘 버튼들 간격 조정 */

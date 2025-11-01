@@ -56,7 +56,7 @@ Spring Boot와 Thymeleaf를 사용한 교회 모바일 주보 관리 시스템�
 ### 도구
 - **Gradle** (빌드 도구)
 - **Lombok** (코드 간소화)
-- **Docker** (컨테이너화)
+- **GitHub Actions** (CI/CD)
 - **AWS EC2** (배포 플랫폼)
 
 ## 프로젝트 구조
@@ -150,32 +150,21 @@ java -jar build/libs/bulletin-0.0.1-SNAPSHOT.jar
 
 ## 배포 방법
 
-### AWS EC2 배포
-AWS EC2 인스턴스에 배포하는 방법은 [DEPLOY_EC2.md](DEPLOY_EC2.md) 파일을 참조하세요.
+### GitHub Actions CI/CD
+이 프로젝트는 GitHub Actions를 사용하여 자동 배포됩니다.
 
-**Linux/Mac에서 배포:**
+**배포 과정:**
+1. `main` 브랜치에 push하면 자동으로 배포 시작
+2. GitHub Actions Runner에서 프로젝트 빌드
+3. JAR 파일을 EC2 인스턴스로 전송
+4. systemd 서비스 재시작
+
+**수동 배포 (Windows):**
+Windows에서 로컬 개발 및 테스트 방법은 [DEPLOY_WINDOWS.md](DEPLOY_WINDOWS.md) 파일을 참조하세요.
+
+**SSH 접속:**
 ```bash
-# EC2 인스턴스에서
-git clone https://github.com/your-repo/bulletin.git
-cd bulletin
-cp env.template .env
-# .env 파일 수정
-sudo ./deploy.sh
-```
-
-**Windows에서 배포:**
-Windows CMD/PowerShell에서도 배포 가능합니다. 자세한 내용은 [DEPLOY_WINDOWS.md](DEPLOY_WINDOWS.md) 파일을 참조하세요.
-
-**빠른 시작 (Windows):**
-```cmd
-REM 배치 파일 사용
-deploy-to-ec2.bat your-ec2-ip C:\path\to\key.pem
-
-REM 또는 PowerShell 스크립트 사용
-.\deploy-to-ec2.ps1 -Ec2Ip "your-ec2-ip" -KeyPath "C:\path\to\key.pem"
-
-REM 또는 SSH로 직접 접속
-ssh -i "C:\path\to\key.pem" ec2-user@your-ec2-ip
+ssh -i "your-key.pem" ec2-user@your-ec2-ip
 ```
 
 ## 데이터베이스 설정
