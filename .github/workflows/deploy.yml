@@ -174,47 +174,44 @@ jobs:
           else
             # 서비스 파일이 없으면 생성
             if [ ! -f /etc/systemd/system/bulletin.service ]; then
-              cat << 'SERVICEEOF' | sudo tee /etc/systemd/system/bulletin.service > /dev/null
-[Unit]
-Description=교회 모바일 주보 시스템
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=${RUN_USER}
-Group=${RUN_USER}
-WorkingDirectory=${APP_DIR}
-EnvironmentFile=${APP_DIR}/.env
-Environment="SPRING_PROFILES_ACTIVE=ec2"
-ExecStart=/usr/bin/java -Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar ${APP_DIR}/app.jar
-ExecStop=/bin/kill -15 $MAINPID
-Restart=on-failure
-RestartSec=10
-StartLimitInterval=60
-StartLimitBurst=3
-
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=bulletin
-
-# 보안 설정
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=${APP_DIR}/uploads ${APP_DIR}/logs
-
-# 리소스 제한
-LimitNOFILE=65536
-LimitNPROC=4096
-MemoryLimit=2G
-
-[Install]
-WantedBy=multi-user.target
-SERVICEEOF
-              sudo sed -i "s|\${RUN_USER}|$RUN_USER|g" /etc/systemd/system/bulletin.service
-              sudo sed -i "s|\${APP_DIR}|$APP_DIR|g" /etc/systemd/system/bulletin.service
+              echo -e "${YELLOW}📝 서비스 파일 생성 중...${NC}"
+              echo "[Unit]" | sudo tee /etc/systemd/system/bulletin.service > /dev/null
+              echo "Description=교회 모바일 주보 시스템" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "After=network-online.target" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "Wants=network-online.target" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "[Service]" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "Type=simple" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "User=$RUN_USER" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "Group=$RUN_USER" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "WorkingDirectory=$APP_DIR" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "EnvironmentFile=$APP_DIR/.env" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "Environment=\"SPRING_PROFILES_ACTIVE=ec2\"" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "ExecStart=/usr/bin/java -Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar $APP_DIR/app.jar" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "ExecStop=/bin/kill -15 \$MAINPID" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "Restart=on-failure" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "RestartSec=10" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "StartLimitInterval=60" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "StartLimitBurst=3" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "StandardOutput=journal" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "StandardError=journal" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "SyslogIdentifier=bulletin" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "# 보안 설정" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "NoNewPrivileges=true" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "PrivateTmp=true" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "ProtectSystem=strict" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "ProtectHome=true" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "ReadWritePaths=$APP_DIR/uploads $APP_DIR/logs" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "# 리소스 제한" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "LimitNOFILE=65536" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "LimitNPROC=4096" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "MemoryLimit=2G" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "[Install]" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
+              echo "WantedBy=multi-user.target" | sudo tee -a /etc/systemd/system/bulletin.service > /dev/null
               sudo systemctl daemon-reload
               echo -e "${GREEN}✅ 서비스 파일 생성 완료${NC}"
             fi
