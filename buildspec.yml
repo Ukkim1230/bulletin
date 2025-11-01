@@ -46,26 +46,13 @@ phases:
       
   post_build:
     commands:
-      - echo "✅ 빌드 완료"
-      - echo "📦 JAR 파일 확인"
+      - echo "Build completed"
+      - echo "Checking JAR file"
       - JAR_FILE=$(ls -1 build/libs/*SNAPSHOT*.jar | head -n1)
       - echo "JAR_FILE=$JAR_FILE" >> env_vars.txt
       - ls -lh $JAR_FILE
-      - echo "파일 크기: $(du -h $JAR_FILE | cut -f1)"
-      - |
-        if [ -n "$EC2_HOST" ] && [ -n "$EC2_SSH_KEY" ]; then
-          echo "🚀 EC2 배포 시작..."
-          echo "$EC2_SSH_KEY" > /tmp/ec2_key.pem
-          chmod 600 /tmp/ec2_key.pem
-          SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60"
-          USERNAME="${EC2_USERNAME:-ec2-user}"
-          scp $SSH_OPTS -i /tmp/ec2_key.pem "$JAR_FILE" "$USERNAME@$EC2_HOST:/tmp/app.jar" || { echo "❌ 파일 전송 실패"; rm -f /tmp/ec2_key.pem; exit 1; }
-          ssh $SSH_OPTS -i /tmp/ec2_key.pem "$USERNAME@$EC2_HOST" "set -e && APP_DIR=\"/opt/bulletin\" && SERVICE_NAME=\"bulletin\" && RUN_USER=\"$USERNAME\" && sudo mkdir -p \$APP_DIR/{logs,uploads/bulletin-images,uploads/sheet-music,uploads/small-groups} && if [ -f \"\$APP_DIR/app.jar\" ]; then sudo cp \"\$APP_DIR/app.jar\" \"\$APP_DIR/app.jar.backup.\$(date +%s)\"; fi && sudo cp /tmp/app.jar \$APP_DIR/app.jar && sudo chown -R \$RUN_USER:\$RUN_USER \$APP_DIR && if [ -f /etc/systemd/system/\$SERVICE_NAME.service ]; then sudo systemctl restart \$SERVICE_NAME && echo \"✅ 서비스 재시작 완료\"; fi && rm -f /tmp/app.jar"
-          rm -f /tmp/ec2_key.pem
-          echo "✅ 배포 완료"
-        else
-          echo "⚠️ EC2 환경 변수가 설정되지 않았습니다. 아티팩트만 생성합니다."
-        fi
+      - echo "File size - $(du -h $JAR_FILE | cut -f1)"
+      - bash -c 'if [ -n "$EC2_HOST" ] && [ -n "$EC2_SSH_KEY" ]; then echo "Starting EC2 deployment..."; echo "$EC2_SSH_KEY" > /tmp/ec2_key.pem; chmod 600 /tmp/ec2_key.pem; SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60"; USERNAME="${EC2_USERNAME:-ec2-user}"; JAR_FILE=$(ls -1 build/libs/*SNAPSHOT*.jar | head -n1); scp $SSH_OPTS -i /tmp/ec2_key.pem "$JAR_FILE" "$USERNAME@$EC2_HOST:/tmp/app.jar" || { echo "File transfer failed"; rm -f /tmp/ec2_key.pem; exit 1; }; ssh $SSH_OPTS -i /tmp/ec2_key.pem "$USERNAME@$EC2_HOST" "set -e && APP_DIR=\"/opt/bulletin\" && SERVICE_NAME=\"bulletin\" && RUN_USER=\"$USERNAME\" && sudo mkdir -p \$APP_DIR/logs \$APP_DIR/uploads/bulletin-images \$APP_DIR/uploads/sheet-music \$APP_DIR/uploads/small-groups && if [ -f \"\$APP_DIR/app.jar\" ]; then sudo cp \"\$APP_DIR/app.jar\" \"\$APP_DIR/app.jar.backup.\$(date +%s)\"; fi && sudo cp /tmp/app.jar \$APP_DIR/app.jar && sudo chown -R \$RUN_USER:\$RUN_USER \$APP_DIR && if [ -f /etc/systemd/system/\$SERVICE_NAME.service ]; then sudo systemctl restart \$SERVICE_NAME && echo \"Service restarted\"; fi && rm -f /tmp/app.jar"; rm -f /tmp/ec2_key.pem; echo "Deployment completed"; else echo "EC2 environment variables not set. Creating artifacts only."; fi'
 
 artifacts:
   files:
