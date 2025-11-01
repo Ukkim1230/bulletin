@@ -63,7 +63,7 @@ server:
 
 # 애플리케이션 설정
 app:
-  url: ${APP_URL:http://localhost:8080}
+  url: ${APP_URL:https://hjcb.duckdns.org}
 
 # 파일 업로드 설정
 file:
@@ -133,7 +133,7 @@ server:
 
 # EC2 배포 환경에서 실제 도메인 사용
 app:
-  url: ${APP_URL:http://localhost:8080}
+  url: ${APP_URL:https://hjcb.duckdns.org}
 
 # 파일 업로드 설정
 file:
