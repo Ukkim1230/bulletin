@@ -40,6 +40,19 @@ jobs:
         JAR_SIZE=$(du -h "$JAR" | cut -f1)
         echo "✅ JAR 파일 발견: $JAR ($JAR_SIZE)"
     
+    - name: Verify EC2 connectivity
+      env:
+        HOST: ${{ secrets.EC2_HOST }}
+      run: |
+        echo "🔍 EC2 연결 테스트 중..."
+        echo "대상 호스트: $HOST"
+        
+        # 포트 22 연결 테스트
+        timeout 5 bash -c "</dev/tcp/$HOST/22" 2>/dev/null && echo "✅ 포트 22 열림" || echo "⚠️ 포트 22 연결 실패"
+        
+        # ping 테스트
+        ping -c 2 $HOST 2>/dev/null && echo "✅ Ping 성공" || echo "⚠️ Ping 실패"
+    
     - name: Copy files to EC2
       env:
         SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -49,24 +62,51 @@ jobs:
         echo "$SSH_KEY" > /tmp/ec2_key.pem
         chmod 600 /tmp/ec2_key.pem
         
-        SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o ConnectionAttempts=3"
+        SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=5 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -v"
         
-        # JAR 파일 전송
-        echo "📦 JAR 파일 전송 중..."
-        scp $SSH_OPTS -i /tmp/ec2_key.pem \
-          "${{ steps.jar.outputs.jar }}" \
-          "$USERNAME@$HOST:/tmp/app.jar" || {
-          echo "❌ JAR 파일 전송 실패!"
+        # SSH 연결 테스트
+        echo "🔍 SSH 연결 테스트 중..."
+        ssh $SSH_OPTS -i /tmp/ec2_key.pem -o BatchMode=yes "$USERNAME@$HOST" "echo 'SSH 연결 성공'" || {
+          echo "❌ SSH 연결 실패!"
+          echo "디버깅 정보:"
+          echo "- 호스트: $HOST"
+          echo "- 사용자: $USERNAME"
+          echo "- SSH 키 파일 존재: $(test -f /tmp/ec2_key.pem && echo '예' || echo '아니오')"
           rm -f /tmp/ec2_key.pem
           exit 1
         }
         
-        # 서비스 파일 전송 (존재하는 경우)
+        # JAR 파일 전송 (재시도 로직)
+        echo "📦 JAR 파일 전송 중..."
+        SSH_OPTS_SCP="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ConnectionAttempts=3"
+        
+        MAX_RETRIES=3
+        RETRY_COUNT=0
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          if scp $SSH_OPTS_SCP -i /tmp/ec2_key.pem \
+            "${{ steps.jar.outputs.jar }}" \
+            "$USERNAME@$HOST:/tmp/app.jar"; then
+            echo "✅ JAR 파일 전송 성공"
+            break
+          else
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "⚠️ 전송 실패 (시도 $RETRY_COUNT/$MAX_RETRIES)"
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              sleep 5
+            else
+              echo "❌ JAR 파일 전송 실패 (모든 재시도 실패)"
+              rm -f /tmp/ec2_key.pem
+              exit 1
+            fi
+          fi
+        done
+        
+        # 서비스 파일 전송 (선택적)
         if [ -f bulletin.service ]; then
           echo "📦 서비스 파일 전송 중..."
-          scp $SSH_OPTS -i /tmp/ec2_key.pem \
+          scp $SSH_OPTS_SCP -i /tmp/ec2_key.pem \
             bulletin.service \
-            "$USERNAME@$HOST:/tmp/bulletin.service" || true
+            "$USERNAME@$HOST:/tmp/bulletin.service" || echo "⚠️ 서비스 파일 전송 실패 (계속 진행)"
         fi
         
         rm -f /tmp/ec2_key.pem
